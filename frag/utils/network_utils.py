@@ -229,9 +229,11 @@ def recombine_edges(output_edges):
     Recombine a list of edges based on their rules.
     Recombines identical Xe isotopes. Remove isotopes.
     :param output_edges:
-    :return:
+    :return: A SMILES string or None on failure
     """
     mol = Chem.MolFromSmiles(".".join(output_edges))
+    if mol is None:
+        return None
     # Dictionary of atom's to bond together and delete if they come in pairs
     iso_dict = {}
     for atom in mol.GetAtoms():
@@ -266,7 +268,7 @@ def rebuild_smi(input_list, ring_ring):
     Rebuild a SMILES
     :param input_list: the list of fragments to be rebuilt
     :param ring_ring: a boolean - indicating if this is a ring ring split
-    :return:
+    :return: A SMILES String or None on failure
     """
     if ring_ring:
         rebuilt_smi = ".".join(input_list)
@@ -395,6 +397,8 @@ def add_child_and_edge(new_list, input_node, excluded_smi, node_holder,
     """
     # Rebuild the molecule
     rebuilt_smi = rebuild_smi(new_list, ring_ring)
+    if rebuilt_smi is None:
+        return
     # Turn into child molecule
     child_smi = make_child_mol(rebuilt_smi)
     if child_smi is None:
