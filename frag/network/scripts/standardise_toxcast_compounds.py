@@ -9,7 +9,7 @@ We create a 'standardised-compounds.tab.gz' file that contains a 1st-line
 'header' formed from the _OUTPUT_COLUMNS list.
 
 Alan Christie
-October 2019
+November 2019
 """
 
 import argparse
@@ -46,9 +46,9 @@ _OUTPUT_COLUMNS = parser.STANDARD_COLUMNS
 # dtxsid    0
 # smiles    5
 
-expected_min_num_cols = 6
-smiles_col = 5
-compound_col = 0
+expected_min_num_cols = 2
+smiles_col = 0
+compound_col = 1
 expected_input_cols = {compound_col: 'dtxsid',
                        smiles_col: 'smiles'}
 
