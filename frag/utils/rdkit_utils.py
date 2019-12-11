@@ -244,7 +244,7 @@ uncharger = rdMolStandardize.Uncharger()
 
 def standardize(mol):
     mol = rdMolStandardize.Cleanup(mol)
-    mol = fragment(mol);
+    mol = fragment(mol)
     mol = uncharger.uncharge(mol)
     remove_isotopes(mol)
     return mol
