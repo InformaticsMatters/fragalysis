@@ -246,7 +246,12 @@ def standardize(mol):
     mol = rdMolStandardize.Cleanup(mol)
     mol = fragment(mol);
     mol = uncharger.uncharge(mol)
+    remove_isotopes(mol)
     return mol
+
+def remove_isotopes(mol):
+    for atom in mol.GetAtoms():
+        atom.SetIsotope(0)
 
 def fragment(mol):
     frags = Chem.GetMolFrags(mol, asMols=True)

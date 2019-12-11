@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 #
 # Build nodes and edges for a single smiles
+# Example usage:
+# python -m frag.network.scripts.build_single --smiles 'Oc1ccc(-c2ccccc2)cc1'
 
 
 import argparse
