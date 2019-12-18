@@ -260,6 +260,7 @@ def write_isomol_suppliermol_relationships(directory,
                                            isomol_smiles,
                                            isomol_namespace_id,
                                            suppliermol_namespace_id,
+                                           compound_isomer_map,
                                            assay_name=None,
                                            assay_namespace_id=None,
                                            assay_compound_values=None):
@@ -298,18 +299,18 @@ def write_isomol_suppliermol_relationships(directory,
                             ':TYPE\n'.format(isomol_namespace_id,
                                              assay_namespace_id))
 
-    num_edges = 0
+    # The 'isomol-suppliermol' edges file...
     generated_files['edges'].append(filename)
-    with gzip.open(filename, 'wt') as gzip_file:
-        gzip_file.write(':START_ID({}),'
-                        ':END_ID({}),'
-                        ':TYPE\n'.format(isomol_namespace_id,
-                                         suppliermol_namespace_id))
+    with gzip.open(filename, 'wt') as gzip_isr_file:
+        gzip_isr_file.write(':START_ID({}),'
+                            ':END_ID({}),'
+                            ':TYPE\n'.format(isomol_namespace_id,
+                                             suppliermol_namespace_id))
         for smiles in isomol_smiles:
             for compound_id in isomol_smiles[smiles]:
 
-                gzip_file.write('"{}",{},HasVendor\n'.format(smiles, compound_id))
-                num_edges += 1
+                if compound_id in compound_isomer_map:
+                    gzip_isr_file.write('"{}",{},HasVendor\n'.format(smiles, compound_id))
 
                 # IsoMol to Assay?
                 if gzip_iar_file:
@@ -321,8 +322,6 @@ def write_isomol_suppliermol_relationships(directory,
     if gzip_iar_file:
         gzip_iar_file.close()
 
-    logger.info(' {:,}'.format(num_edges))
-
 
 def write_nodes(input_nodes,
                 output_dir,
@@ -330,7 +329,6 @@ def write_nodes(input_nodes,
                 generated_files,
                 isomol_namespace_id,
                 suppliermol_namespace_id,
-                isomol_smiles,
                 non_isomol_isomol_smiles,
                 non_isomol_smiles,
                 vendor_code,
@@ -365,8 +363,8 @@ def write_nodes(input_nodes,
                      '{}-molecule-suppliermol-edges.csv.gz'.
                      format(output_prefix))
     generated_files['edges'].append(augmented_noniso_relationships_filename)
-    gzip_smr_file = gzip.open(augmented_noniso_relationships_filename, 'wt')
-    gzip_smr_file.write(':START_ID({}),'
+    gzip_msr_file = gzip.open(augmented_noniso_relationships_filename, 'wt')
+    gzip_msr_file.write(':START_ID({}),'
                         ':END_ID({}),'
                         ':TYPE\n'.format(FRAG_NAMESPACE, suppliermol_namespace_id))
 
@@ -482,33 +480,6 @@ def write_nodes(input_nodes,
                                         format(noniso_isomol_smiles,
                                                frag_smiles))
 
-                    # A relationship (or relationships)
-                    # from Frag to SupplierMol.
-                    #
-                    # Changes for eMolecules data ...
-                    # where there are separate
-                    # BB and SC databases (i.e. same molecule, same vendor,
-                    # different DB). With eMolecules the same compound can be
-                    # available from either the BB or SC set (each with its
-                    # own vendor code). Basically need to distinguish
-                    # between the compound but from different vedor DBs
-                    #
-                    # If the compound-id and vendor-code combination exists
-                    # we'v
-                    if noniso_isomol_smiles in isomol_smiles:
-                        for compound_id in isomol_smiles[noniso_isomol_smiles]:
-                            if compound_id not in frag_compounds or\
-                                vendor_code not in frag_labels:
-                                gzip_smr_file.write('"{}",{},HasVendor\n'.
-                                                    format(frag_smiles,
-                                                           compound_id))
-                                if compound_id not in frag_compounds:
-                                    frag_compounds.append(compound_id)
-                    else:
-                        logger.warning('Failed to find "%s" in isomol_smiles',
-                                       noniso_isomol_smiles)
-
-                    num_compound_iso_relationships += 1
                     num_compound_relationships += 1
                     augment = True
 
@@ -520,7 +491,7 @@ def write_nodes(input_nodes,
                     if compound_id not in frag_compounds:
                         augment = True
                         # Fragment to Supplier
-                        gzip_smr_file.write('"{}",{},HasVendor\n'.
+                        gzip_msr_file.write('"{}",{},HasVendor\n'.
                                             format(frag_smiles,
                                                    compound_id))
                         frag_compounds.append(compound_id)
@@ -551,7 +522,7 @@ def write_nodes(input_nodes,
 
     # Close augmented nodes and the relationships
     gzip_ai_file.close()
-    gzip_smr_file.close()
+    gzip_msr_file.close()
     gzip_ifr_file.close()
     # And assay relations (if used)
     if gzip_mar_file:
