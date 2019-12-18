@@ -97,7 +97,7 @@ logger.setLevel(logging.INFO)
 # Its format is the date of the change ('YYYY-MM-DD') followed by
 # a dot-delimited number that's incremented for each change on that day.
 # i.e. '2019-05-21.2' is the second version on the 21st May 2019.
-graph_version = '2019-05-26.1'
+graph_version = '2019-12-18.1'
 
 # The minimum number of columns in the input data (a standardised file).
 # Essentially a map of expected column names indexed by column number.
@@ -234,7 +234,7 @@ def create_cost_node(pack_size, field_value):
 def extract_vendor_compounds(suppliermol_gzip_file,
                              suppliermol_edges_gzip_file,
                              supplier_id,
-                             gzip_filename,
+                             vendor_standard_filename,
                              limit,
                              min_hac,
                              max_hac):
@@ -260,7 +260,7 @@ def extract_vendor_compounds(suppliermol_gzip_file,
     :param suppliermol_gzip_file: The SupplierMol node file
     :param suppliermol_edges_gzip_file: The SupplierMol to Supplier edges file
     :param supplier_id: The ID of the supplier node
-    :param gzip_filename: The compressed standard file to process
+    :param vendor_standard_filename: The compressed standard file to process
     :param limit: If non-zero, limit precessing to only the first N molecules
     :param min_hac: Minimum HAC (0 for no minimum)
     :param max_hac: Maximum HAC (0 for no maximum)
@@ -276,11 +276,11 @@ def extract_vendor_compounds(suppliermol_gzip_file,
     global num_vendor_mols
     global num_vendor_molecule_failures
 
-    logger.info('Processing %s...', gzip_filename)
+    logger.info('Processing %s...', vendor_standard_filename)
 
     num_lines = 0
     num_processed = 0
-    with gzip.open(gzip_filename, 'rt') as gzip_file:
+    with gzip.open(vendor_standard_filename, 'rt') as gzip_file:
 
         # Check first line (a space-delimited header).
         # This is a basic sanity-check to make sure the important column
@@ -533,7 +533,8 @@ if __name__ == '__main__':
                                            generated_files,
                                            isomol_smiles,
                                            isomol_namespace,
-                                           suppliermol_namespace)
+                                           suppliermol_namespace,
+                                           compound_isomer_map)
 
     # -------
     # Stage 3 - Augment
@@ -555,7 +556,6 @@ if __name__ == '__main__':
                                                  generated_files,
                                                  isomol_namespace,
                                                  suppliermol_namespace,
-                                                 isomol_smiles,
                                                  non_isomol_isomol_smiles,
                                                  non_isomol_smiles,
                                                  vendor_code)
@@ -579,7 +579,7 @@ if __name__ == '__main__':
         write_load_script(args.output, generated_files)
 
     # Finish by writing the expected edges header file...
-    edges_header_file = open(os.path.join(args.output,EDGES_HDR_FILENAME), 'wt')
+    edges_header_file = open(os.path.join(args.output, EDGES_HDR_FILENAME), 'wt')
     edges_header_file.write(':START_ID(F2),:END_ID(F2),label,:TYPE\n')
     edges_header_file.close()
 
