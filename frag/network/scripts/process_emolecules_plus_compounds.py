@@ -119,8 +119,10 @@ output_filename_prefix = 'emolecules-plus'
 # The namespaces of the various indices
 suppliermol_namespace = 'SM_EMOLS_PLUS'
 supplier_namespace = 'S'
-isomol_namespace = 'ISO-EMOLS_PLUS'
 vendor_code = 'V_EMOLS_PLUS'
+
+# The IsoMol namespace, the same for all vendors..
+isomol_namespace = 'ISOMOL'
 
 # The list of files generated.
 # Used to generate the accompanying `load_neo4j.sh`.

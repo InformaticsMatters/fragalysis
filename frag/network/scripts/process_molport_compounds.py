@@ -164,8 +164,10 @@ output_filename_prefix = 'molport'
 # The namespaces of the various indices
 suppliermol_namespace = 'SM_MP'
 supplier_namespace = 'S'
-isomol_namespace = 'ISO'
 vendor_code = 'V_MP'
+
+# The IsoMol namespace, the same for all vendors..
+isomol_namespace = 'ISOMOL'
 
 # Regular expression to find the MolPort compound IDs
 # (in the original nodes file).

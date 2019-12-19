@@ -119,8 +119,10 @@ output_filename_prefix = 'toxcast'
 # The namespaces of the various indices
 suppliermol_namespace = 'SM_TXCST'
 supplier_namespace = 'S'
-isomol_namespace = 'ISO-TXCST'
 vendor_code = 'V_TXCST'
+
+# The IsoMol namespace, the same for all vendors..
+isomol_namespace = 'ISOMOL'
 
 # The list of files generated.
 # Used to generate the accompanying `load_neo4j.sh`.

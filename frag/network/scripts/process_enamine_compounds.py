@@ -118,8 +118,10 @@ output_filename_prefix = 'real'
 # The namespaces of the various indices
 suppliermol_namespace = 'SM_R'
 supplier_namespace = 'S'
-isomol_namespace = 'ISO-R'
 vendor_code = 'V_REAL'
+
+# The IsoMol namespace, the same for all vendors..
+isomol_namespace = 'ISOMOL'
 
 # The list of files generated.
 # Used to generate the accompanying `load_neo4j.sh`.

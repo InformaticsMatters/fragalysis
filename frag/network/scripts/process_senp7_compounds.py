@@ -117,9 +117,11 @@ output_filename_prefix = 'senp7'
 # The namespaces of the various indices
 suppliermol_namespace = 'SM_SENP7'
 supplier_namespace = 'S'
-isomol_namespace = 'ISO-SENP7'
 assay_namespace = 'A_SENP7'
 vendor_code = 'V_SENP7'
+
+# The IsoMol namespace, the same for all vendors..
+isomol_namespace = 'ISOMOL'
 
 # The list of files generated.
 # Used to generate the accompanying `load_neo4j.sh`.

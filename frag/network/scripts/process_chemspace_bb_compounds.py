@@ -118,8 +118,10 @@ output_filename_prefix = 'chemspace-bb'
 # The namespaces of the various indices
 suppliermol_namespace = 'SM_E_CS_BB'
 supplier_namespace = 'S'
-isomol_namespace = 'ISO-E-CS-BB'
 vendor_code = 'V_CS_BB'
+
+# The IsoMol namespace, the same for all vendors..
+isomol_namespace = 'ISOMOL'
 
 # The list of files generated.
 # Used to generate the accompanying `load_neo4j.sh`.
