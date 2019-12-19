@@ -49,8 +49,10 @@ _OUTPUT_COLUMNS = parser.STANDARD_COLUMNS
 expected_min_num_cols = 2
 smiles_col = 0
 compound_col = 1
+# User upper-case (regardless)
+# this is how column header comparisons are made here
 expected_input_cols = {compound_col: 'ID',
-                       smiles_col: 'Smiles'}
+                       smiles_col: 'SMILES'}
 
 # The output file.
 # Which will be gzipped.
@@ -119,7 +121,7 @@ def standardise_vendor_compounds(output_file, file_name, limit):
                   format(expected_input_cols, len(field_names)))
         # Check salient columns (ignoring case)...
         for col_num in expected_input_cols:
-            actual_name = field_names[col_num].strip().lower()
+            actual_name = field_names[col_num].strip().upper()
             if actual_name != expected_input_cols[col_num]:
                 error('expected "{}" in column {} found "{}"'.
                       format(expected_input_cols[col_num],
