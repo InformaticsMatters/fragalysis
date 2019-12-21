@@ -1,0 +1,3 @@
+export ROOT_DIR=/home/timbo/github/tdudgeon/fair-molecules
+
+rm -rf $ROOT_DIR/tree/* && python -m frag.network.scripts.standardise_chembl_compounds_2 --input ~/data/chembl/chembl_25.sdf.gz --output $ROOT_DIR

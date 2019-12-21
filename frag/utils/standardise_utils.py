@@ -28,7 +28,7 @@ from frag.utils.rdkit_utils import standardize
 # The tuple returned by calls to 'standardise()'.
 # If the first field (std) is None then the standard cannot be used.
 # All items are rendered as strings.
-StandardInfo = namedtuple('StandardInfo', 'std iso noniso hac')
+StandardInfo = namedtuple('StandardInfo', 'std iso noniso hac inchis inchik noniso_inchis noniso_inchik iso_inchis iso_inchik')
 
 # Out logger
 logger = None
@@ -58,6 +58,8 @@ def standardise(osmiles):
     std = None
     iso = None
     noniso = None
+    inchis = None
+    inchik = None
     hac = 0
 
     mol = None
@@ -101,6 +103,7 @@ def standardise(osmiles):
             logger.error('Got nothing from MolToSmiles(%s, iso).'
                          ' Skipping this Vendor compound', osmiles)
 
+
     if std:
 
         # We have a standard representation,
@@ -108,6 +111,14 @@ def standardise(osmiles):
 
         try:
             noniso = Chem.MolToSmiles(std, isomericSmiles=False, canonical=True)
+            nonisoMol = Chem.MolFromSmiles(noniso)
+            try:
+                inchis, inchik = gen_inchi(nonisoMol, '')
+                iso_inchis, iso_inchik = gen_inchi(std, '/FixedH')
+                noniso_inchis, noniso_inchik = gen_inchi(nonisoMol, '/FixedH')
+            except Exception as e:
+                logger.warning('gen_inchi exception for %s', noniso)
+
         except Exception as e:
             logger.warning('MolToSmiles(%s, noniso) exception: "%s"',
                            osmiles, e.message)
@@ -115,9 +126,15 @@ def standardise(osmiles):
             logger.error('Got nothing from MolToSmiles(%s, noniso).'
                          ' Skipping this Vendor compound', osmiles)
 
+
     # If anything went wrong, set std to None.
     # It's "all-or-nothing"...
     if not iso or not noniso:
         std = None
 
-    return StandardInfo(std, iso, noniso, str(hac))
+    return StandardInfo(std, iso, noniso, str(hac), inchis, inchik, noniso_inchis, noniso_inchik, iso_inchis, iso_inchik)
+
+def gen_inchi(mol, opts):
+    inchis = Chem.inchi.MolToInchi(mol, opts)
+    inchik = Chem.inchi.InchiToInchiKey(inchis)
+    return inchis, inchik
