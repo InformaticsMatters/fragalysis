@@ -60,6 +60,11 @@ def standardise(osmiles):
     noniso = None
     inchis = None
     inchik = None
+    noniso_inchis = None
+    noniso_inchik = None
+    iso_inchis = None
+    iso_inchik = None
+
     hac = 0
 
     mol = None
