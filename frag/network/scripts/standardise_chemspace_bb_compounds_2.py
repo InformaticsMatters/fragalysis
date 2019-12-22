@@ -1,34 +1,34 @@
 #!/usr/bin/env python
 
-"""standardise_chembl_compounds.py
+"""standardise_chemspace_bb_compounds.py
 
-Processes ChEMBL compound files, and generates a 'standard'
-tab-separated output.
-Download ChEMBL from here: ftp://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/latest/
+Processes ChemSpace vendor compound files, and generates a 'standard'
+tab-separated output. This module supports duplicate compounds. Duplicate
+compound IDs will have the suffix 'duplicate' added. For duplicates of
+the compound 'C01' the first compound will be 'C01' and the first duplicate
+'C01-duplicate-1'.
 
-Unlike most other sources of molecules where the structures are specified as SMILES with ChEMBL
-the structures are in SDF format which means that the osmiles data must be generated from the CTAB
-section by RDKit. It is therefore not 100% guaranteed to exactly represent the structure.
+We create a 'standardised-compounds.tab.gz' file that contains a 1st-line
+'header' formed from the _OUTPUT_COLUMNS list.
 
-We create a 'chembl-standardised-compounds.tab' file that contains a 1st-line
-'header' consisting of OSMILES\tISO_SMILES\tNONISO_SMILES\tHAC\tCMPD_ID.
-
-Tim Dudgeon
-December 2019
+Alan Christie
+August 2019
 """
 
 import argparse
+import glob
 import gzip
 import logging
+import os
 import sys
 
-from rdkit import Chem, RDLogger
+from rdkit import RDLogger
 
 from frag.utils import standardise_utils
 from frag.std_utils import parser
 
 # Configure basic logging
-logger = logging.getLogger('chembl')
+logger = logging.getLogger('chemspace')
 out_hdlr = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter('%(asctime)s %(levelname)s # %(message)s',
                               '%Y-%m-%dT%H:%M:%S')
@@ -41,15 +41,33 @@ logger.setLevel(logging.INFO)
 # In this file we don't add any of our own.
 _OUTPUT_COLUMNS = parser.STANDARD_COLUMNS
 
+# The minimum number of columns in the input files and
+# and a map of expected column names indexed by (0-based) column number.
+#
+# The 'standardised' files contain at least 2 columns...
+#
+# smiles    0
+# id        1
+
+expected_min_num_cols = 2
+smiles_col = 0
+compound_col = 1
+expected_input_cols = {compound_col: 'id',
+                       smiles_col: 'smiles'}
+
 # The output file.
 # Which will be gzipped.
 output_filename = 'standardised-compounds.tab'
 
 # The prefix we use in our fragment file
-vendor_prefix = 'CHEMBL:'
+prefix = 'CHEMSPACE-BB:'
 
 # All the vendor compound IDs
 vendor_compounds = set()
+# A map of duplicate compounds and the number of duplicates.
+# The index uses the vendor's original ID value, not our prefixed value.
+duplicate_suffix = '-duplicate-'
+vendor_duplicates = {}
 
 # Various diagnostic counts
 num_vendor_mols = 0
@@ -57,7 +75,7 @@ num_vendor_molecule_failures = 0
 num_inchi_failures = 0
 
 # The line rate at which the process writes updates to stdout.
-report_rate = 50000
+report_rate = 250000
 
 
 def error(msg):
@@ -82,50 +100,73 @@ def standardise_vendor_compounds(root_dir, file_name, limit):
     :returns: The number of items processed
     """
     global vendor_compounds
+    global vendor_duplicates
+    global duplicate_suffix
     global num_vendor_mols
     global num_vendor_molecule_failures
     global num_inchi_failures
 
     logger.info('Standardising %s...', file_name)
 
-    count = 0
+    line_num = 0
     num_processed = 0
 
-    vendor = 'chembl'
+    vendor = 'chemspace_bb'
 
     vendor_paths_file = open('/'.join([root_dir, 'datasets', vendor + '.txt']) , "wt")
 
-    with gzip.open(file_name, 'rb') as input:
-
-        suppl = Chem.ForwardSDMolSupplier(input)
+    with gzip.open(file_name, 'rt') as gzip_file:
 
         new_inchis = 0
         new_noniso = 0
         new_iso = 0
 
-        for mol in suppl:
+        # Check first line (a space-delimited header).
+        # This is a basic sanity-check to make sure the important column
+        # names are what we expect.
 
-            count += 1
+        hdr = gzip_file.readline()
+        field_names = hdr.split('\t')
+        # Expected minimum number of columns...
+        if len(field_names) < expected_min_num_cols:
+            error('expected at least {} columns found {}'.
+                  format(expected_input_cols, len(field_names)))
+        # Check salient columns (ignoring case)...
+        for col_num in expected_input_cols:
+            actual_name = field_names[col_num].strip().lower()
+            if actual_name != expected_input_cols[col_num]:
+                error('expected "{}" in column {} found "{}"'.
+                      format(expected_input_cols[col_num],
+                             col_num,
+                             actual_name))
 
-            if mol is None:
-                logger.warning("Failed to handle record %s", count)
+        # Columns look right...
+
+        for line in gzip_file:
+
+            line_num += 1
+            fields = line.split('\t')
+            if len(fields) <= 1:
                 continue
 
-            chembl_id = mol.GetProp('chembl_id')
+            if line_num % report_rate == 0:
+                logger.info(' ...at compound {:,}'.format(line_num))
 
-            if count % report_rate == 0:
-                logger.info(' ...at compound {:,}'.format(count))
-
-            osmiles = Chem.MolToSmiles(mol)
-            # generate the ID. The data in the chembl_id field looks like CHEMBL153534
-            # so we need to string off the CHEMBL bit as our generated ID looks like CHEMBL:153534
-            compound_id = vendor_prefix + chembl_id[6:]
+            osmiles = fields[smiles_col].strip()
+            vendor_id = fields[compound_col].strip()
+            compound_id = prefix + vendor_id
 
             # Add the compound (expected to be unique)
             # to our set of 'all compounds'.
             if compound_id in vendor_compounds:
-                error('Duplicate compound ID ({})'.format(compound_id))
-            vendor_compounds.add(compound_id)
+                # Get the number of duplicates (default of 1)
+                # using the vendor's original ID as a key
+                duplicate_count = vendor_duplicates.setdefault(vendor_id, 1)
+                compound_id += '{}{}'.format(duplicate_suffix, duplicate_count)
+                # Increment for any further duplicates
+                vendor_duplicates[vendor_id] = duplicate_count + 1
+            else:
+                vendor_compounds.add(compound_id)
 
             # Standardise and update global maps...
             # And try and handle and report any catastrophic errors
@@ -136,7 +177,6 @@ def standardise_vendor_compounds(root_dir, file_name, limit):
                 num_vendor_molecule_failures += 1
                 continue
             num_vendor_mols += 1
-
 
             if std_info.inchik is None:
                 num_inchi_failures += 1
@@ -159,9 +199,9 @@ def standardise_vendor_compounds(root_dir, file_name, limit):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser('Vendor Compound Standardiser (ChEMBL)')
+    parser = argparse.ArgumentParser('Vendor Compound Standardiser (Enamine/CS-BB)')
     parser.add_argument('--input', '-i',
-                        help='The ChEMBL chembl_*.sdf.gz file to be processed.')
+                        help='The ChemSpace file to be processed.')
     parser.add_argument('--output', '-o',
                         help='The output directory')
     parser.add_argument('--limit', '-l',
@@ -170,6 +210,7 @@ if __name__ == '__main__':
                              ' process all otherwise')
 
     args = parser.parse_args()
+
 
     # Suppress basic RDKit logging...
     RDLogger.logger().setLevel(RDLogger.ERROR)

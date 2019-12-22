@@ -20,7 +20,10 @@ February 2019
 """
 
 import logging
+import hashlib
+import os
 from collections import namedtuple
+from os import path
 
 from rdkit import Chem
 from frag.utils.rdkit_utils import standardize
@@ -31,7 +34,7 @@ from frag.utils.rdkit_utils import standardize
 StandardInfo = namedtuple('StandardInfo', 'std iso noniso hac inchis inchik noniso_inchis noniso_inchik iso_inchis iso_inchik')
 
 # Out logger
-logger = None
+logger = logging.getLogger(__name__)
 
 def standardise(osmiles):
     """Given a vendor (original) SMILES this method standardises
@@ -46,10 +49,6 @@ def standardise(osmiles):
              the standard form will be returned as None.
     """
     global logger
-
-    # Create our logger if it does not exist
-    if not logger:
-        logger = logging.getLogger(__name__)
 
     # Standardise and update global maps...
     # And try and handle and report any catastrophic errors
@@ -143,3 +142,92 @@ def gen_inchi(mol, opts):
     inchis = Chem.inchi.MolToInchi(mol, opts)
     inchik = Chem.inchi.InchiToInchiKey(inchis)
     return inchis, inchik
+
+def write_data(tree_root, vendor, osmiles, std_info, compound_id, vendor_paths_file):
+
+    global logger
+
+    new_inchis = 0
+    new_noniso = 0
+    new_iso = 0
+
+    inchis = std_info.inchis
+    inchik = std_info.inchik
+    prefix = inchik[:2]
+    level1 = "/".join([tree_root, prefix]) # first 2 chars of InChiKey
+    level2 = "/".join([level1, inchik]) # full InChiKey
+    md5_inchis = hashlib.md5(inchis.encode('utf-8'))
+    md5_noniso = hashlib.md5(std_info.noniso.encode('utf-8'))
+    level3 = "/".join([level2, md5_inchis.hexdigest()]) # hash of InChi string
+    inchidata = "/".join([level3, 'inchi'])
+    level4 = "/".join([level3, md5_noniso.hexdigest()]) # hash of non-isomeric smiles
+    nonisodata = "/".join([level4, 'moldata.yml'])
+
+
+
+    if not path.exists(level1): # first 2 chars of InChiKey
+        #logger.info('Creating dir at level 1 %s', level1)
+        os.mkdir(level1)
+    # else:
+    #     logger.info('Level 1 already exists %s', level1)
+
+    if not path.exists(level2): # full InChiKey
+        #logger.info('Creating dir at level 2 %s', level2)
+        os.mkdir(level2)
+    # else:
+    #     logger.info('Level 2 already exists %s', level2)
+
+    if not path.exists(level3): # hash of InChi string
+        #logger.info('Creating dir at level 3 %s', level3)
+        os.mkdir(level3)
+        f = open(inchidata, "wt")
+        f.write(inchis)
+        f.close()
+        new_inchis += 1
+    # else:
+    #     logger.info('Level 3 already exists %s', level3)
+
+    if not path.exists(level4): # hash of non-isomeric smiles
+        #logger.info('Creating dir at level 4 %s', level4)
+        os.mkdir(level4)
+        f = open(nonisodata, "wt")
+        f.write("smiles: {}\n".format(std_info.noniso))
+        f.write("inchi: {}\n".format(std_info.noniso_inchis))
+        f.write("inchikey: {}\n".format(std_info.noniso_inchik))
+        f.write("hac: {}\n".format(std_info.hac))
+        f.close()
+        new_noniso += 1
+    # else:
+    #     logger.info('Level 4 already exists %s', level4)
+
+    if (std_info.noniso == std_info.iso):
+        vendorlevel = level4
+    else:
+        md5_iso = hashlib.md5(std_info.iso.encode('utf-8'))
+        level5 = "/".join([level4, md5_iso.hexdigest()])
+        vendorlevel = level5
+        if not path.exists(level5): # hash of isomeric smiles
+            isodata = "/".join([level5, 'moldata.yml'])
+            os.mkdir(level5)
+            f = open(isodata, "wt")
+            f.write("smiles: {}\n".format(std_info.iso))
+            f.write("inchi: {}\n".format(std_info.iso_inchis))
+            f.write("inchikey: {}\n".format(std_info.iso_inchik))
+            f.close()
+            new_iso += 1
+        # else:
+        #     logger.info('Level 5 already exists %s', level5)
+
+    vendordata = "/".join([vendorlevel, vendor + '.yml'])
+
+    # if path.exists(vendordata): # vendor data
+    #     logger.info('Appending to existing data for %s', vendordata)
+    # else:
+    trimmed = vendorlevel[len(tree_root)+1:]
+    vendor_paths_file.write(trimmed + "\n")
+
+    f = open(vendordata, "at")
+    f.write("id: {}\nsmiles: {}\n".format(compound_id, osmiles))
+    f.close()
+
+    return new_inchis, new_noniso, new_iso
