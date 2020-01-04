@@ -76,7 +76,7 @@ num_vendor_molecule_failures = 0
 num_inchi_failures = 0
 
 # The line rate at which the process writes updates to stdout.
-report_rate = 250000
+report_rate = 50000
 
 
 def error(msg):
