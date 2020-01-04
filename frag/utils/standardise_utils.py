@@ -31,7 +31,7 @@ from frag.utils.rdkit_utils import standardize
 # The tuple returned by calls to 'standardise()'.
 # If the first field (std) is None then the standard cannot be used.
 # All items are rendered as strings.
-StandardInfo = namedtuple('StandardInfo', 'std iso noniso hac inchis inchik noniso_inchis noniso_inchik iso_inchis iso_inchik')
+StandardInfo = namedtuple('StandardInfo', 'std iso noniso hac rac inchis inchik noniso_inchis noniso_inchik iso_inchis iso_inchik')
 
 # Out logger
 logger = logging.getLogger(__name__)
@@ -84,6 +84,11 @@ def standardise(osmiles):
         # and create isomeric an non-isomeric representations.
 
         hac = mol.GetNumHeavyAtoms()
+        rac = 0
+        for atom in mol.GetAtoms():
+            if atom.IsInRing():
+                rac += 1
+
         try:
             std = standardize(mol)
         except Exception as e:
@@ -136,7 +141,7 @@ def standardise(osmiles):
     if not iso or not noniso:
         std = None
 
-    return StandardInfo(std, iso, noniso, str(hac), inchis, inchik, noniso_inchis, noniso_inchik, iso_inchis, iso_inchik)
+    return StandardInfo(std, iso, noniso, str(hac), str(rac), inchis, inchik, noniso_inchis, noniso_inchik, iso_inchis, iso_inchik)
 
 def gen_inchi(mol, opts):
     inchis = Chem.inchi.MolToInchi(mol, opts)
