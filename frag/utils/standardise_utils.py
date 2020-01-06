@@ -65,6 +65,7 @@ def standardise(osmiles):
     iso_inchik = None
 
     hac = 0
+    rac = 0
 
     mol = None
     try:
