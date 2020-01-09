@@ -2,7 +2,7 @@
 #
 # Build nodes and edges for a single smiles
 # Example usage:
-# python -m frag.network.scripts.build_single --smiles 'Oc1ccc(-c2ccccc2)cc1'
+# O.c1ccccc1
 
 
 import argparse
@@ -23,6 +23,7 @@ def main():
     parser.add_argument("--smiles")
     parser.add_argument("--id")
     parser.add_argument("--standardize", action="store_true")
+    parser.add_argument("--no-recurse", action="store_true")
     parser.add_argument("--isomeric", dest="iso_flag", action="store_true")
     parser.add_argument("--non_isomeric", dest="iso_flag", action="store_false")
 
@@ -57,8 +58,9 @@ def main():
     # Build the network
     node_holder = NodeHolder(iso_flag=args.iso_flag)
     max_frags = 0
+    recurse = not args.no_recurse
     node_holder = build_network(attrs, node_holder,
-                                max_frags, smiles, args.verbosity)
+                                max_frags, smiles, args.verbosity, recurse=recurse)
     # Write the data out
     for node in node_holder.node_list:
         print(str(node))

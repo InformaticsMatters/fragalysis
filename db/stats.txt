@@ -1,0 +1,168 @@
+Load 500,000 CSBB. Single process:
+
+(fairmols) timbo@helium:~/github/im/fragalysis$ time python -m frag.network.scripts.standardise_chemspace_bb_compounds_3 -i ~/data/chemspace-bb_01.txt.gz -s 2
+2020-01-05T13:45:23 INFO # Standardising /home/timbo/data/chemspace-bb_01.txt.gz...
+2020-01-05T13:55:34 INFO #  ...at compound 50,000
+[14:05:17] Can't kekulize mol.  Unkekulized atoms: 3 5
+
+2020-01-05T14:06:36 INFO #  ...at compound 100,000
+2020-01-05T14:18:42 INFO #  ...at compound 150,000
+[14:25:13] Can't kekulize mol.  Unkekulized atoms: 3 5
+
+2020-01-05T14:31:01 INFO #  ...at compound 200,000
+2020-01-05T14:43:30 INFO #  ...at compound 250,000
+2020-01-05T14:56:05 INFO #  ...at compound 300,000
+2020-01-05T15:08:49 INFO #  ...at compound 350,000
+2020-01-05T15:19:43 INFO #  ...at compound 400,000
+2020-01-05T15:30:29 INFO #  ...at compound 450,000
+2020-01-05T15:41:21 INFO #  ...at compound 500,000
+2020-01-05T15:41:21 INFO # Processed 500000 records
+2020-01-05T15:41:21 INFO # 500,000 vendor molecules
+2020-01-05T15:41:21 INFO # 0 vendor molecule failures
+2020-01-05T15:41:21 INFO # 0 inchi generation failures
+
+real	115m58.997s
+user	60m40.562s
+sys	2m8.900s
+
+
+Running 4 loaders at once:
+
+(fairmols) timbo@helium:~/github/im/fragalysis$ time python -m frag.network.scripts.standardise_chemspace_bb_compounds_3 -i ~/data/chemspace-bb_01.txt.gz -s 2
+2020-01-05T15:48:48 INFO # Standardising /home/timbo/data/chemspace-bb_01.txt.gz...
+2020-01-05T15:58:57 INFO #  ...at compound 50,000
+[16:08:34] Can't kekulize mol.  Unkekulized atoms: 3 5
+
+2020-01-05T16:09:50 INFO #  ...at compound 100,000
+2020-01-05T16:21:14 INFO #  ...at compound 150,000
+[16:27:20] Can't kekulize mol.  Unkekulized atoms: 3 5
+
+2020-01-05T16:32:43 INFO #  ...at compound 200,000
+2020-01-05T16:44:15 INFO #  ...at compound 250,000
+2020-01-05T16:55:58 INFO #  ...at compound 300,000
+2020-01-05T17:07:44 INFO #  ...at compound 350,000
+2020-01-05T17:19:30 INFO #  ...at compound 400,000
+2020-01-05T17:31:17 INFO #  ...at compound 450,000
+2020-01-05T17:43:10 INFO #  ...at compound 500,000
+2020-01-05T17:43:10 INFO # Processed 500000 records
+2020-01-05T17:43:10 INFO # 500,000 vendor molecules
+2020-01-05T17:43:10 INFO # 0 vendor molecule failures
+2020-01-05T17:43:10 INFO # 0 inchi generation failures
+
+real	114m23.225s
+user	64m14.721s
+sys	1m37.464s
+
+(other 3 took):
+real	115m49.319s
+real	115m51.524s
+real	115m27.005s
+
+Running 8 loaders at once:
+
+2020-01-05T17:51:04 INFO # Standardising /home/timbo/data/chemspace-bb_01.txt.gz...
+2020-01-05T18:04:31 INFO #  ...at compound 50,000
+[18:17:34] Can't kekulize mol.  Unkekulized atoms: 3 5
+
+2020-01-05T18:19:10 INFO #  ...at compound 100,000
+2020-01-05T18:33:59 INFO #  ...at compound 150,000
+[18:42:00] Can't kekulize mol.  Unkekulized atoms: 3 5
+
+2020-01-05T18:48:59 INFO #  ...at compound 200,000
+2020-01-05T19:04:04 INFO #  ...at compound 250,000
+2020-01-05T19:19:14 INFO #  ...at compound 300,000
+2020-01-05T19:34:36 INFO #  ...at compound 350,000
+2020-01-05T19:50:09 INFO #  ...at compound 400,000
+2020-01-05T20:05:36 INFO #  ...at compound 450,000
+2020-01-05T20:21:20 INFO #  ...at compound 500,000
+2020-01-05T20:21:20 INFO # Processed 500000 records
+2020-01-05T20:21:20 INFO # 500,000 vendor molecules
+2020-01-05T20:21:20 INFO # 0 vendor molecule failures
+2020-01-05T20:21:20 INFO # 0 inchi generation failures
+
+real	150m16.905s
+user	79m27.349s
+sys	1m56.506s
+
+
+On STFC (16 cores, 16GB) loading 12 parts + ChEMBL
+
+gse84885@fair-molecules-db:~/github/im/fragalysis$ time python -m frag.network.scripts.standardise_chemspace_bb_compounds_3 -i ~/data/chemspace-bb_01.txt.gz -s 2
+2020-01-06T12:35:59 INFO # Standardising /home/gse84885/data/chemspace-bb_01.txt.gz...
+2020-01-06T12:51:15 INFO #  ...at compound 50,000
+[13:05:48] Can't kekulize mol.  Unkekulized atoms: 3 5
+
+2020-01-06T13:07:36 INFO #  ...at compound 100,000
+2020-01-06T13:24:17 INFO #  ...at compound 150,000
+[13:32:58] Can't kekulize mol.  Unkekulized atoms: 3 5
+
+2020-01-06T13:40:34 INFO #  ...at compound 200,000
+2020-01-06T13:56:49 INFO #  ...at compound 250,000
+2020-01-06T14:13:01 INFO #  ...at compound 300,000
+2020-01-06T14:28:12 INFO #  ...at compound 350,000
+2020-01-06T14:43:31 INFO #  ...at compound 400,000
+2020-01-06T14:58:39 INFO #  ...at compound 450,000
+2020-01-06T15:13:57 INFO #  ...at compound 500,000
+2020-01-06T15:13:57 INFO # Processed 500000 records
+2020-01-06T15:13:57 INFO # 500,000 vendor molecules
+2020-01-06T15:13:57 INFO # 0 vendor molecule failures
+2020-01-06T15:13:57 INFO # 0 inchi generation failures
+
+real    157m58.181s
+user    70m18.353s
+sys     2m25.167s
+
+On STFC from remote machine (8/16) loading 12 parts + ChEMBL
+
+$ time python -m frag.network.scripts.standardise_chemspace_bb_compounds_3 -i ~/data/chemspace-bb_01.txt.gz -s 2
+2020-01-06T18:11:28 INFO # Standardising /home/gse84885/data/chemspace-bb_01.txt.gz...
+2020-01-06T18:28:01 INFO #  ...at compound 50,000
+[18:42:30] Can't kekulize mol.  Unkekulized atoms: 3 5
+
+2020-01-06T18:44:16 INFO #  ...at compound 100,000
+2020-01-06T19:00:33 INFO #  ...at compound 150,000
+[19:09:13] Can't kekulize mol.  Unkekulized atoms: 3 5
+
+2020-01-06T19:16:54 INFO #  ...at compound 200,000
+2020-01-06T19:33:26 INFO #  ...at compound 250,000
+2020-01-06T19:49:57 INFO #  ...at compound 300,000
+2020-01-06T20:06:47 INFO #  ...at compound 350,000
+2020-01-06T20:23:27 INFO #  ...at compound 400,000
+2020-01-06T20:39:59 INFO #  ...at compound 450,000
+2020-01-06T20:56:57 INFO #  ...at compound 500,000
+2020-01-06T20:56:57 INFO # Processed 500000 records
+2020-01-06T20:56:57 INFO # 500,000 vendor molecules
+2020-01-06T20:56:57 INFO # 0 vendor molecule failures
+2020-01-06T20:56:57 INFO # 0 inchi generation failures
+
+real    165m29.711s
+user    70m44.742s
+sys     2m28.644s
+
+Repeat of above:
+
+
+$ time python -m frag.network.scripts.standardise_chemspace_bb_compounds_3 -i ~/data/chemspace-bb_01.txt.gz -s 2
+2020-01-07T08:18:44 INFO # Standardising /home/gse84885/data/chemspace-bb_01.txt.gz...
+2020-01-07T08:35:37 INFO #  ...at compound 50,000
+[08:50:39] Can't kekulize mol.  Unkekulized atoms: 3 5
+
+2020-01-07T08:52:30 INFO #  ...at compound 100,000
+2020-01-07T09:09:14 INFO #  ...at compound 150,000
+[09:18:12] Can't kekulize mol.  Unkekulized atoms: 3 5
+
+2020-01-07T09:26:10 INFO #  ...at compound 200,000
+2020-01-07T09:43:15 INFO #  ...at compound 250,000
+2020-01-07T10:00:25 INFO #  ...at compound 300,000
+2020-01-07T10:17:40 INFO #  ...at compound 350,000
+2020-01-07T10:34:46 INFO #  ...at compound 400,000
+2020-01-07T10:52:15 INFO #  ...at compound 450,000
+2020-01-07T11:09:40 INFO #  ...at compound 500,000
+2020-01-07T11:09:40 INFO # Processed 500000 records
+2020-01-07T11:09:40 INFO # 500,000 vendor molecules
+2020-01-07T11:09:40 INFO # 0 vendor molecule failures
+2020-01-07T11:09:40 INFO # 0 inchi generation failures
+
+real    170m57.147s
+user    72m50.066s
+sys     2m24.246s

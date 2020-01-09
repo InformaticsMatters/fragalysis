@@ -390,7 +390,7 @@ def get_ring_ring_splits(input_mol, labels=False, do_comb_index=False):
 
 
 def add_child_and_edge(new_list, input_node, excluded_smi, node_holder,
-                       ring_ring=False):
+                       ring_ring=False, recurse=True):
     """
     :param input_pair:
     :return:
@@ -412,7 +412,7 @@ def add_child_and_edge(new_list, input_node, excluded_smi, node_holder,
                                             input_node,
                                             node)
         # Now generate the children for this too
-        if is_new:
+        if is_new and recurse:
             create_children(node, node_holder)
 
 
@@ -425,7 +425,7 @@ def canon_input(smi, isomericSmiles=True):
         return iso_smiles
 
 
-def create_children(input_node, node_holder, max_frag=0, smiles=None, log_file=None):
+def create_children(input_node, node_holder, max_frag=0, smiles=None, log_file=None, recurse=True):
     """
     Create a series of edges from an input molecule. Iteratively
     :param input_node:
@@ -473,7 +473,7 @@ def create_children(input_node, node_holder, max_frag=0, smiles=None, log_file=N
                 excluded_smi = item
                 continue
             new_list.append(item)
-        add_child_and_edge(new_list, input_node, excluded_smi, node_holder)
+        add_child_and_edge(new_list, input_node, excluded_smi, node_holder, recurse=recurse)
 
     if ring_ring_splits:
         for ring_ring_split in ring_ring_splits:
@@ -535,7 +535,7 @@ def write_data_as_csv(output_dir, node_holder):
 
 
 def build_network(attrs, node_holder,
-                  max_frags=0, base_dir='.', verbosity=0):
+                  max_frags=0, base_dir='.', verbosity=0, recurse=True):
 
     log_file = None
     if ENABLE_BUILD_NETWORK_LOG:
@@ -543,7 +543,7 @@ def build_network(attrs, node_holder,
         log_file = open(log_file_name, 'w')
 
     # Create the nodes and test with output
-    tqdm_disable = True if verbosity else False
+    tqdm_disable = True #if verbosity else False
     for attr in tqdm(attrs, disable=tqdm_disable):
 
         start_time = timeit.default_timer()
@@ -555,7 +555,8 @@ def build_network(attrs, node_holder,
             direct_ring_ring_splits, direct_frags =\
                 create_children(node, node_holder,
                                 max_frags, attr.SMILES,
-                                log_file)
+                                log_file, recurse=recurse)
+            #print("Direct frags {0}".format(str(node_holder.size())))
             create_end_time = timeit.default_timer()
 
         if verbosity:
