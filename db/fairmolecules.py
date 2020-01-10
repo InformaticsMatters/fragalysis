@@ -183,24 +183,31 @@ class MoleculeLoader:
             std_info = standardise_utils.standardise(osmiles)
         if not session:
             session = self.create_session()
-        inchi, inchi_added = self.insert_inchi(session, std_info.inchis, std_info.inchik)
-        #inchi, smiles, inchis, inchik, hac, rac
-        noniso, noniso_added = self.insert_noniso(session, inchi, std_info.noniso, std_info.noniso_inchis, std_info.noniso_inchik,
-                                    std_info.hac, std_info.rac)
-        isomol = None
-        nonisomol = None
-        if std_info.noniso == std_info.iso:
-            nonisomol = noniso
-        else:
-            isomol = self.insert_iso(session, std_info, noniso)
 
-        mol_source = self.insert_source_mol(session, osmiles, source_id, source_code, nonisomol, isomol)
-        if prices:
-            # TODO - handle price ranges as well (min max values)
-            for q in prices:
-                self.insert_price(session, q, prices[q], mol_source)
+        try:
+            inchi, inchi_added = self.insert_inchi(session, std_info.inchis, std_info.inchik)
+            #inchi, smiles, inchis, inchik, hac, rac
+            noniso, noniso_added = self.insert_noniso(session, inchi, std_info.noniso,
+                                                      std_info.noniso_inchis, std_info.noniso_inchik,
+                                                      std_info.hac, std_info.rac)
+            isomol = None
+            nonisomol = None
+            if std_info.noniso == std_info.iso:
+                nonisomol = noniso
+            else:
+                isomol = self.insert_iso(session, std_info, noniso)
 
-        session.commit()
+            mol_source = self.insert_source_mol(session, osmiles, source_id, source_code, nonisomol, isomol)
+            if prices:
+                # TODO - handle price ranges as well (min max values)
+                for q in prices:
+                    self.insert_price(session, q, prices[q], mol_source)
+
+            session.commit()
+
+        except:
+            print("Failed to handle molecule {0} {1}. inchi: {2} noniso: {3} iso: {4}".format(source_code, osmiles, std_info.noniso, std_info.iso))
+            session.rollback()
 
 
     def insert_source(self, name, version, currency):
