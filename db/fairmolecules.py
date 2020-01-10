@@ -206,7 +206,8 @@ class MoleculeLoader:
             session.commit()
 
         except:
-            print("Failed to handle molecule {0} {1}. inchi: {2} noniso: {3} iso: {4}".format(source_code, osmiles, std_info.noniso, std_info.iso))
+            print("Failed to handle molecule {0} {1}. inchi: {2} noniso: {3} iso: {4}".format(
+                source_code, osmiles, std_info.inchis, std_info.noniso, std_info.iso))
             session.rollback()
 
 

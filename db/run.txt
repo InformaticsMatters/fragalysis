@@ -17,4 +17,4 @@ time python -m frag.network.scripts.standardise_chemspace_bb_compounds_3-1 -i ~/
 conda activate fairmols && time python -m frag.network.scripts.standardise_chemspace_bb_compounds_3-0  -s 2 -i ~/data/chemspace/2019-07/chemspace-bb_01.txt.gz
 
 
-conda activate fairmols && time python -m frag.network.scripts.standardise_chemspace_bb_compounds_3-1 -i ~/data/chemspace/2019-12/chemspace-bb_00.txt.gz -s 3
+conda activate fairmols && time python -m frag.network.scripts.standardise_chemspace_bb_compounds_3-1 -s 3 -i ~/data/chemspace/2019-12/chemspace-bb_00.txt.gz
