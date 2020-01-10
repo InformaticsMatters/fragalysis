@@ -94,12 +94,18 @@ class MoleculeLoader:
             self.url = db_url
         else:
             self.url = os.environ.get('FM_DB_URL')
-        if self.url == None:
+        if self.url is None:
             raise('ERROR: Must define database URL using the db_url parameter or the FM_DB_URL environment variable')
 
         self.engine = create_engine(self.url)
         self.DBSession = sessionmaker(bind=self.engine)
         self.frag_cache = {}
+        self.inchi_hits = 0
+        self.inchi_miss = 0
+        self.noniso_hits = 0
+        self.noniso_miss = 0
+        self.iso_hits = 0
+        self.iso_miss = 0
 
     def gen_std_info(self, nonisosmiles):
         mol = Chem.MolFromSmiles(nonisosmiles)
@@ -127,12 +133,14 @@ class MoleculeLoader:
         # print("Handling InChi")
 
         i = session.query(Inchi).filter(Inchi.inchik == inchik, Inchi.inchis == inchis).first()
-        if i == None:
+        if i is None:
+            self.inchi_miss += 1
             i = Inchi(inchis=inchis, inchik=inchik)
             session.add(i)
             #print("Inserted Inchi")
             return i, True
         else:
+            self.inchi_hits += 1
             #print("Found existing InChi")
             return i, False
 
@@ -141,14 +149,16 @@ class MoleculeLoader:
         # print("Handling noniso SMILES")
 
         noniso = session.query(NonIsomol).filter(NonIsomol.smiles == smiles).first()
-        if noniso == None:
+        if noniso is None:
+            self.noniso_miss += 1
             noniso = NonIsomol(smiles=smiles,
                                inchis=inchis, inchik=inchik, inchi=inchi,
                                hac=hac, rac=rac, fs=fs)
             session.add(noniso)
-            return noniso, True
             #print("Inserted NonIso SMILES")
+            return noniso, True
         else:
+            self.noniso_hits += 1
             #print("Found existing NonIso SMILES")
             return noniso, False
 
@@ -158,11 +168,13 @@ class MoleculeLoader:
         # print("Handling iso SMILES")
 
         iso = session.query(Isomol).filter(Isomol.smiles == std_info.iso).first()
-        if iso == None:
+        if iso is None:
+            self.iso_miss += 1
             iso = Isomol(smiles=std_info.iso, inchis=std_info.iso_inchis, inchik=std_info.iso_inchik, nonisomol=noniso)
             session.add(iso)
             #print("Inserted Iso SMILES")
-        #else:
+        else:
+            self.iso_miss += 1
             #print("Found existing Iso SMILES")
 
         return iso
@@ -178,6 +190,15 @@ class MoleculeLoader:
         session.add(p)
         return p
 
+    def retry(self, func, *argv, **kwargs):
+        try:
+            return func(*argv, **kwargs)
+        except:
+            ex = sys.exc_info()[0]
+            print("Retrying function {0} with args {1} and {2}".format(str(func), str(argv), str(kwargs)))
+            print("Error was ", str(ex))
+            return func(*argv, **kwargs)
+
     def insert_mol(self, osmiles, source_id, source_code, prices=None, std_info=None, session=None):
         if not std_info:
             std_info = standardise_utils.standardise(osmiles)
@@ -185,9 +206,9 @@ class MoleculeLoader:
             session = self.create_session()
 
         try:
-            inchi, inchi_added = self.insert_inchi(session, std_info.inchis, std_info.inchik)
-            #inchi, smiles, inchis, inchik, hac, rac
-            noniso, noniso_added = self.insert_noniso(session, inchi, std_info.noniso,
+            inchi, inchi_added = self.retry(self.insert_inchi, session, std_info.inchis, std_info.inchik)
+
+            noniso, noniso_added = self.retry(self.insert_noniso, session, inchi, std_info.noniso,
                                                       std_info.noniso_inchis, std_info.noniso_inchik,
                                                       std_info.hac, std_info.rac)
             isomol = None
@@ -195,7 +216,7 @@ class MoleculeLoader:
             if std_info.noniso == std_info.iso:
                 nonisomol = noniso
             else:
-                isomol = self.insert_iso(session, std_info, noniso)
+                isomol = self.retry(self.insert_iso, session, std_info, noniso)
 
             mol_source = self.insert_source_mol(session, osmiles, source_id, source_code, nonisomol, isomol)
             if prices:
@@ -205,10 +226,14 @@ class MoleculeLoader:
 
             session.commit()
 
-        except:
+        except Exception as e:
+            session.rollback()
             print("Failed to handle molecule {0} {1}. inchi: {2} noniso: {3} iso: {4}".format(
                 source_code, osmiles, std_info.inchis, std_info.noniso, std_info.iso))
-            session.rollback()
+            if hasattr(e, 'message'):
+                print(e.message)
+            else:
+                print(e)
 
 
     def insert_source(self, name, version, currency):
@@ -305,6 +330,7 @@ class MoleculeLoader:
 
 
 def main():
+
 
     ### command line args definitions #########################################
 
