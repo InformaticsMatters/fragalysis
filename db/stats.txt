@@ -166,3 +166,222 @@ $ time python -m frag.network.scripts.standardise_chemspace_bb_compounds_3 -i ~/
 real    170m57.147s
 user    72m50.066s
 sys     2m24.246s
+
+
+Molport
+=======
+000-000
+inchi hits/misses 154743 345082
+noniso hits/misses 105815 394010
+iso hits/misses 0 139290
+2020-01-10T21:12:55 INFO # Processed 499830 records
+2020-01-10T21:12:55 INFO # 499,830 vendor molecules
+2020-01-10T21:12:55 INFO # 110 vendor molecule failures
+2020-01-10T21:12:55 INFO # 5 inchi generation failures
+
+real    370m48.770s
+user    113m36.158s
+sys     3m29.562s
+
+
+
+000-500
+inchi hits/misses 119439 380500
+noniso hits/misses 111125 388814
+iso hits/misses 0 102817
+2020-01-10T21:21:45 INFO # Processed 499945 records
+2020-01-10T21:21:45 INFO # 499,945 vendor molecules
+2020-01-10T21:21:45 INFO # 2 vendor molecule failures
+2020-01-10T21:21:45 INFO # 6 inchi generation failures
+
+real    378m46.657s
+user    114m40.179s
+sys     2m7.619s
+
+001-000
+inchi hits/misses 90676 409102
+noniso hits/misses 83739 416039
+iso hits/misses 0 135825
+2020-01-10T21:21:47 INFO # Processed 499785 records
+2020-01-10T21:21:47 INFO # 499,785 vendor molecules
+2020-01-10T21:21:47 INFO # 31 vendor molecule failures
+2020-01-10T21:21:47 INFO # 7 inchi generation failures
+
+real    378m3.378s
+user    115m45.628s
+sys     2m51.045s
+
+
+001-500
+inchi hits/misses 71553 427533
+noniso hits/misses 68034 431052
+iso hits/misses 0 64216
+2020-01-10T21:22:09 INFO # Processed 499098 records
+2020-01-10T21:22:09 INFO # 499,098 vendor molecules
+2020-01-10T21:22:09 INFO # 34 vendor molecule failures
+2020-01-10T21:22:09 INFO # 12 inchi generation failures
+
+real    377m59.161s
+user    116m44.163s
+sys     2m10.139s
+
+002-000
+inchi hits/misses 46152 453257
+noniso hits/misses 43159 456250
+iso hits/misses 0 22904
+2020-01-10T21:14:37 INFO # Processed 499410 records
+2020-01-10T21:14:37 INFO # 499,410 vendor molecules
+2020-01-10T21:14:37 INFO # 5 vendor molecule failures
+2020-01-10T21:14:37 INFO # 1 inchi generation failures
+
+real    369m52.485s
+user    115m17.436s
+sys     2m27.149s
+
+
+002-500
+inchi hits/misses 33469 465710
+noniso hits/misses 25183 473996
+iso hits/misses 0 20746
+2020-01-10T21:26:49 INFO # Processed 499183 records
+2020-01-10T21:26:49 INFO # 499,183 vendor molecules
+2020-01-10T21:26:49 INFO # 15 vendor molecule failures
+2020-01-10T21:26:49 INFO # 4 inchi generation failures
+
+real    381m48.509s
+user    117m57.999s
+sys     2m26.592s
+
+003-000
+inchi hits/misses 59302 439051
+noniso hits/misses 52362 445991
+iso hits/misses 0 47673
+2020-01-10T21:26:39 INFO # Processed 498353 records
+2020-01-10T21:26:39 INFO # 498,353 vendor molecules
+2020-01-10T21:26:39 INFO # 6 vendor molecule failures
+2020-01-10T21:26:39 INFO # 0 inchi generation failures
+
+real    380m53.619s
+user    118m49.779s
+sys     2m11.309s
+
+
+003-500
+inchi hits/misses 26247 472919
+noniso hits/misses 22281 476885
+iso hits/misses 0 15448
+2020-01-10T21:13:11 INFO # Processed 499168 records
+2020-01-10T21:13:11 INFO # 499,168 vendor molecules
+2020-01-10T21:13:11 INFO # 35 vendor molecule failures
+2020-01-10T21:13:11 INFO # 2 inchi generation failures
+
+real    367m13.927s
+user    112m52.734s
+sys     2m42.881s
+
+004-000
+inchi hits/misses 19873 476806
+noniso hits/misses 18385 478294
+iso hits/misses 0 6815
+2020-01-10T21:26:40 INFO # Processed 496679 records
+2020-01-10T21:26:40 INFO # 496,679 vendor molecules
+2020-01-10T21:26:40 INFO # 5 vendor molecule failures
+2020-01-10T21:26:40 INFO # 0 inchi generation failures
+
+real    378m54.265s
+user    117m8.164s
+sys     1m59.081s
+
+004-500
+inchi hits/misses 52650 447162
+noniso hits/misses 45487 454325
+iso hits/misses 0 37644
+2020-01-10T21:17:51 INFO # Processed 499814 records
+2020-01-10T21:17:51 INFO # 499,814 vendor molecules
+2020-01-10T21:17:51 INFO # 14 vendor molecule failures
+2020-01-10T21:17:51 INFO # 2 inchi generation failures
+
+real    369m52.457s
+user    112m32.695s
+sys     2m32.136s
+
+005-000
+inchi hits/misses 54953 444953
+noniso hits/misses 47289 452617
+iso hits/misses 0 62440
+2020-01-10T21:23:14 INFO # Processed 499909 records
+2020-01-10T21:23:14 INFO # 499,909 vendor molecules
+2020-01-10T21:23:14 INFO # 26 vendor molecule failures
+2020-01-10T21:23:14 INFO # 3 inchi generation failures
+
+real    374m59.799s
+user    113m36.600s
+sys     2m5.912s
+
+005-500
+inchi hits/misses 42289 457559
+noniso hits/misses 35523 464325
+iso hits/misses 0 43319
+2020-01-10T21:21:11 INFO # Processed 499854 records
+2020-01-10T21:21:11 INFO # 499,854 vendor molecules
+2020-01-10T21:21:11 INFO # 33 vendor molecule failures
+2020-01-10T21:21:11 INFO # 6 inchi generation failures
+
+real    372m47.899s
+user    112m46.519s
+sys     2m7.626s
+
+006-000
+inchi hits/misses 31089 468794
+noniso hits/misses 27259 472624
+iso hits/misses 0 92964
+2020-01-10T21:26:59 INFO # Processed 499893 records
+2020-01-10T21:26:59 INFO # 499,893 vendor molecules
+2020-01-10T21:26:59 INFO # 72 vendor molecule failures
+2020-01-10T21:26:59 INFO # 10 inchi generation failures
+
+real    378m26.792s
+user    115m2.484s
+sys     2m6.867s
+
+006-500
+inchi hits/misses 34180 465632
+noniso hits/misses 30792 469020
+iso hits/misses 0 64699
+2020-01-10T21:27:07 INFO # Processed 499822 records
+2020-01-10T21:27:07 INFO # 499,822 vendor molecules
+2020-01-10T21:27:07 INFO # 73 vendor molecule failures
+2020-01-10T21:27:07 INFO # 10 inchi generation failures
+
+real    378m25.521s
+user    115m38.455s
+sys     2m4.704s
+
+
+After putting WAL on root disk:
+
+007-000
+inchi hits/misses 25183 472209
+noniso hits/misses 22757 474635
+iso hits/misses 0 114598
+2020-01-11T14:12:02 INFO # Processed 497429 records
+2020-01-11T14:12:02 INFO # 497,429 vendor molecules
+2020-01-11T14:12:02 INFO # 161 vendor molecule failures
+2020-01-11T14:12:02 INFO # 37 inchi generation failures
+
+real    242m49.594s
+user    88m22.807s
+sys     2m38.770s
+
+007-500
+inchi hits/misses 15972 97933
+noniso hits/misses 13975 99930
+iso hits/misses 0 28284
+2020-01-11T11:28:44 INFO # Processed 113915 records
+2020-01-11T11:28:44 INFO # 113,915 vendor molecules
+2020-01-11T11:28:44 INFO # 195 vendor molecule failures
+2020-01-11T11:28:44 INFO # 10 inchi generation failures
+
+real    79m13.984s
+user    20m46.602s
+sys     0m35.645s

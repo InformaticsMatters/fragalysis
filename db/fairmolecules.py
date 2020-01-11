@@ -174,7 +174,7 @@ class MoleculeLoader:
             session.add(iso)
             #print("Inserted Iso SMILES")
         else:
-            self.iso_miss += 1
+            self.iso_hits += 1
             #print("Found existing Iso SMILES")
 
         return iso

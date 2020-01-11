@@ -1,5 +1,7 @@
 docker run -p 5432:5432 -e POSTGRES_PASSWORD=hello -v /home/timbo/fmolsdata:/var/lib/postgresql/data:Z --name fairmoleculesdb postgres:11 -c 'shared_buffers=6GB'
 
+docker run -p 5432:5432 -e POSTGRES_PASSWORD=hello -v /pgdata:/var/lib/postgresql/data:Z -v /pgwal:/var/lib/postgresql/data/pg_wal:Z --name fairmoleculesdb postgres:11 -c 'shared_buffers=8GB'
+
 conda activate fairmols
 export FM_DB_URL=postgres://username:password@localhost:5432/fairmolecules
 
@@ -21,3 +23,6 @@ conda activate fairmols && time python -m frag.network.scripts.standardise_chems
 
 
 conda activate fairmols && time python -m frag.network.scripts.standardise_chemspace_bb_compounds_3-1 -s 3 -i ~/data/chemspace/2019-12/chemspace-bb_00.txt.gz
+
+
+conda activate fairmols && time python -m frag.network.scripts.standardise_molport_compounds-3 -s 4 -i ~/data/molport/2019-12/iis_smiles-000-000-000--000-499-999.txt.gz
