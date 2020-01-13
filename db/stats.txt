@@ -385,3 +385,38 @@ iso hits/misses 0 28284
 real    79m13.984s
 user    20m46.602s
 sys     0m35.645s
+
+
+# table and index stats
+
+fairmolecules=# \dt+
+                         List of relations
+ Schema |    Name    | Type  |  Owner   |    Size    | Description
+--------+------------+-------+----------+------------+-------------
+ public | edge       | table | postgres | 8192 bytes |
+ public | inchi      | table | postgres | 4007 MB    |
+ public | isomol     | table | postgres | 750 MB     |
+ public | mol_source | table | postgres | 3305 MB    |
+ public | nonisomol  | table | postgres | 5372 MB    |
+ public | price      | table | postgres | 698 MB     |
+ public | source     | table | postgres | 16 kB      |
+(7 rows)
+
+fairmolecules=# \di+
+                                    List of relations
+ Schema |         Name         | Type  |  Owner   |   Table    |    Size    | Description
+--------+----------------------+-------+----------+------------+------------+-------------
+ public | edge_pkey            | index | postgres | edge       | 8192 bytes |
+ public | inchi_pkey           | index | postgres | inchi      | 531 MB     |
+ public | isomol_pkey          | index | postgres | isomol     | 64 MB      |
+ public | isomol_smiles_key    | index | postgres | isomol     | 275 MB     |
+ public | ix_inchi_inchik      | index | postgres | inchi      | 1530 MB    |
+ public | ix_nonisomol_fs      | index | postgres | nonisomol  | 685 MB     |
+ public | mol_source_pkey      | index | postgres | mol_source | 690 MB     |
+ public | nonisomol_pkey       | index | postgres | nonisomol  | 541 MB     |
+ public | nonisomol_smiles_key | index | postgres | nonisomol  | 1767 MB    |
+ public | price_pkey           | index | postgres | price      | 353 MB     |
+ public | source_pkey          | index | postgres | source     | 16 kB      |
+(11 rows)
+
+

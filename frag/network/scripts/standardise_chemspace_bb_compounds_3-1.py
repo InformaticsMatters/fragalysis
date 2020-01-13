@@ -18,7 +18,7 @@ August 2019
 import argparse
 import gzip
 import logging
-import sys
+import sys, os
 
 from rdkit import RDLogger
 
@@ -118,6 +118,8 @@ def standardise_vendor_compounds(file_name, source_id, limit):
     loader = MoleculeLoader()
     session = loader.create_session()
 
+    base_name = os.path.basename(file_name)
+
     with gzip.open(file_name, 'rt') as gzip_file:
 
         # Check first line (a space-delimited header).
@@ -140,6 +142,8 @@ def standardise_vendor_compounds(file_name, source_id, limit):
                              actual_name))
 
         # Columns look right...
+
+        loader.create_input(session, base_name, source_id)
 
         for line in gzip_file:
 
@@ -184,13 +188,14 @@ def standardise_vendor_compounds(file_name, source_id, limit):
             if std_info.inchik is None:
                 num_inchi_failures += 1
             else:
-                loader.insert_mol(osmiles, source_id, compound_id, prices=prices, std_info=std_info, session=session)
+                loader.insert_mol(osmiles, compound_id, prices=prices, std_info=std_info, session=session)
 
             # Enough?
             num_processed += 1
             if limit and num_processed >= limit:
                 break
 
+    loader.complete_input(session, num_processed, num_vendor_molecule_failures, num_inchi_failures)
     session.close()
     return num_processed
 

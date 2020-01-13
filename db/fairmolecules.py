@@ -1,8 +1,9 @@
 import os, sys, argparse
-from sqlalchemy import Column, PrimaryKeyConstraint, ForeignKey, UniqueConstraint, Integer, String, Text, SmallInteger
+from sqlalchemy import Column, PrimaryKeyConstraint, ForeignKey, UniqueConstraint, Integer, String, Text, SmallInteger, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
+from sqlalchemy import func
 
 from frag.utils import standardise_utils
 
@@ -48,7 +49,33 @@ class Source(Base):
     name = Column(Text(), nullable=False)
     version = Column(Text(), nullable=False)
     currency = Column(Text())
-    UniqueConstraint('name', 'version', name='uq_source')
+
+    __table_args__ = (
+        UniqueConstraint('name', 'version', name='uq_source'),
+    )
+
+class MolInput(Base):
+    __tablename__ = 'mol_input'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text(), nullable=False)
+    started_date = Column(DateTime())
+    finished_date = Column(DateTime())
+    size = Column(Integer())
+    molecule_failures = Column(Integer())
+    inchi_failures = Column(Integer())
+    inchi_hits = Column(Integer())
+    inchi_miss = Column(Integer())
+    nonisomol_hits = Column(Integer())
+    nonisomol_miss = Column(Integer())
+    isomol_hits = Column(Integer())
+    isomol_miss = Column(Integer())
+    source_id = Column(Integer, ForeignKey(Source.id, ondelete='CASCADE'), nullable=False)
+    source = relationship(Source)
+
+    __table_args__ = (
+        UniqueConstraint('source_id', 'name', name='uq_input'),
+    )
+
 
 class MolSource(Base):
     __tablename__ = 'mol_source'
@@ -56,12 +83,15 @@ class MolSource(Base):
 
     smiles = Column(Text(), nullable=False)
     code = Column(Text(), nullable=False)
-    source_id = Column(Integer, ForeignKey('source.id', ondelete='CASCADE'), nullable=False)
+    source_id = Column(Integer, ForeignKey(Source.id, ondelete='CASCADE'), nullable=False)
+    input_id = Column(Integer, ForeignKey(MolInput.id, ondelete='CASCADE'), nullable=False)
     nonisomol_id = Column(Integer, ForeignKey('nonisomol.id'))
     isomol_id = Column(Integer, ForeignKey('isomol.id'))
     source = relationship(Source)
+    input = relationship(MolInput)
     nonisomol = relationship(NonIsomol)
     isomol = relationship(Isomol)
+
 
 class Price(Base):
     __tablename__ = 'price'
@@ -70,8 +100,9 @@ class Price(Base):
     price = Column(Integer)
     price_min = Column(Integer)
     price_max = Column(Integer)
-    molsource_id = Column(Integer, ForeignKey(MolSource.id))
+    molsource_id = Column(Integer, ForeignKey(MolSource.id, ondelete='CASCADE'))
     molsource = relationship(MolSource)
+
 
 class Edge(Base):
     __tablename__ = 'edge'
@@ -81,6 +112,7 @@ class Edge(Base):
     label = Column(Text(), nullable=False)
     parent = relationship(NonIsomol, foreign_keys=[parent_id])
     child = relationship(NonIsomol, foreign_keys=[child_id])
+
 
 class MoleculeLoader:
     """
@@ -100,6 +132,7 @@ class MoleculeLoader:
         self.engine = create_engine(self.url)
         self.DBSession = sessionmaker(bind=self.engine)
         self.frag_cache = {}
+        self.count = 0
         self.inchi_hits = 0
         self.inchi_miss = 0
         self.noniso_hits = 0
@@ -179,8 +212,8 @@ class MoleculeLoader:
 
         return iso
 
-    def insert_source_mol(self, session, osmiles, source_id, source_code, nonisomol, isomol):
-        ms = MolSource(smiles=osmiles, code=source_code, source_id=source_id, nonisomol=nonisomol, isomol=isomol)
+    def insert_source_mol(self, session, osmiles, source_code, nonisomol, isomol):
+        ms = MolSource(input=self.mol_input, source_id=self.mol_input.source_id, smiles=osmiles, code=source_code, nonisomol=nonisomol, isomol=isomol)
         session.add(ms)
         #print("Inserted MolSource")
         return ms
@@ -199,7 +232,10 @@ class MoleculeLoader:
             print("Error was ", str(ex))
             return func(*argv, **kwargs)
 
-    def insert_mol(self, osmiles, source_id, source_code, prices=None, std_info=None, session=None):
+    def insert_mol(self, osmiles, source_code, prices=None, std_info=None, session=None):
+
+        self.count += 1
+
         if not std_info:
             std_info = standardise_utils.standardise(osmiles)
         if not session:
@@ -218,7 +254,7 @@ class MoleculeLoader:
             else:
                 isomol = self.retry(self.insert_iso, session, std_info, noniso)
 
-            mol_source = self.insert_source_mol(session, osmiles, source_id, source_code, nonisomol, isomol)
+            mol_source = self.insert_source_mol(session, osmiles, source_code, nonisomol, isomol)
             if prices:
                 # TODO - handle price ranges as well (min max values)
                 for q in prices:
@@ -257,6 +293,25 @@ class MoleculeLoader:
         session.query(Source).filter(Source.id == int(id)).delete()
         session.commit()
 
+    def create_input(self, session, name, source_id):
+        inp = MolInput(name=name, source_id=source_id, started_date=func.now())
+        session.add(inp)
+        session.commit()
+        self.mol_input = inp
+
+    def complete_input(self, session, count, molecule_failures, inchi_failures):
+        inp = self.mol_input
+        inp.molecule_failures = molecule_failures
+        inp.inchi_failures = inchi_failures
+        inp.size = count
+        inp.inchi_hits = self.inchi_hits
+        inp.inchi_miss = self.inchi_miss
+        inp.nonisomol_hits = self.noniso_hits
+        inp.nonisomol_miss = self.noniso_miss
+        inp.isomol_hits = self.iso_hits
+        inp.isomol_miss = self.iso_miss
+        inp.finished_date = func.now()
+        session.commit()
 
     def read_mols_for_fragmentation(self, session, frag_status=None, limit=100):
         mols = session.query(NonIsomol).filter(NonIsomol.fs == frag_status).limit(limit).all()
@@ -271,6 +326,7 @@ class MoleculeLoader:
         return mol
 
     def insert_frags(self, session, nonisomol, node_holder):
+
         cache = self.frag_cache
 
         noniso_added = set()
