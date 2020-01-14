@@ -120,6 +120,8 @@ def standardise_vendor_compounds(file_name, source_id, limit):
     loader = MoleculeLoader()
     session = loader.create_session()
 
+    base_name = os.path.basename(file_name)
+
     with gzip.open(file_name, 'rt') as gzip_file:
 
         # Check first line (a space-delimited header).
@@ -143,6 +145,8 @@ def standardise_vendor_compounds(file_name, source_id, limit):
 
         # Columns look right...
 
+        loader.create_input(session, base_name, source_id)
+
         for line in gzip_file:
 
             line_num += 1
@@ -156,7 +160,23 @@ def standardise_vendor_compounds(file_name, source_id, limit):
             osmiles = fields[smiles_col]
             compound_id = molport_prefix + fields[compound_col].split(supplier_prefix)[1]
 
-            prices= None
+            prices = {}
+            cost_1mg = fields[cost_col[1]]
+            cost_5mg = fields[cost_col[5]]
+            cost_50mg = fields[cost_col[50]]
+
+            if cost_1mg:
+                p_1mg = parse_cost(cost_1mg)
+                if p_1mg:
+                    prices[1] = p_1mg
+            if cost_5mg:
+                p_5mg = parse_cost(cost_5mg)
+                if p_5mg:
+                    prices[5] = p_5mg
+            if cost_50mg:
+                p_50mg = parse_cost(cost_50mg)
+                if p_50mg:
+                    prices[50] = p_50mg
 
             # Add the compound (expected to be unique)
             # to our set of 'all compounds'.
@@ -177,21 +197,39 @@ def standardise_vendor_compounds(file_name, source_id, limit):
             if std_info.inchik is None:
                 num_inchi_failures += 1
             else:
-                loader.insert_mol(osmiles, source_id, compound_id, prices=prices, std_info=std_info, session=session)
+                loader.insert_mol(osmiles, compound_id, prices=prices, std_info=std_info, session=session)
 
             # Enough?
             num_processed += 1
             if limit and num_processed >= limit:
                 break
 
+    loader.complete_input(session, num_processed, num_vendor_molecule_failures, num_inchi_failures)
     session.close()
-    print('inchi hits/misses {0} {1}'.format(loader.inchi_hits, loader.inchi_miss))
-    print('noniso hits/misses {0} {1}'.format(loader.noniso_hits, loader.noniso_miss))
-    print('iso hits/misses {0} {1}'.format(loader.iso_hits, loader.iso_miss))
     return num_processed
 
+def parse_cost(str):
+    if str == 'null':
+        return None
+    parts = str.split()
+    if len(parts) == 1:
+        return int(parts[0])
+    if len(parts) == 2:
+        if parts[0] == '<':
+            return (None, int(parts[1]))
+        if parts[0] == '>':
+            return (int(parts[1]), None)
+    elif len(parts) == 3:
+        return (int(parts[0]), int(parts[2]))
 
 if __name__ == '__main__':
+
+    print(str(parse_cost('< 50')))
+    print(str(parse_cost('> 50')))
+    print(str(parse_cost('5 - 50')))
+    print(str(parse_cost('null')))
+    print(str(parse_cost('5')))
+    sys.exit(0)
 
     parser = argparse.ArgumentParser('Vendor Compound Standardiser (MolPort)')
     parser.add_argument('--input', '-i',

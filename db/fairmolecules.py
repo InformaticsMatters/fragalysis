@@ -1,5 +1,5 @@
 import os, sys, argparse
-from sqlalchemy import Column, PrimaryKeyConstraint, ForeignKey, UniqueConstraint, Integer, String, Text, SmallInteger, DateTime
+from sqlalchemy import Column, PrimaryKeyConstraint, ForeignKey, Index, UniqueConstraint, Integer, String, Text, SmallInteger, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
@@ -15,14 +15,17 @@ class Inchi(Base):
     __tablename__ = 'inchi'
     id = Column(Integer, primary_key=True)
 
-    inchik = Column(Text(), nullable=False, index=True)
+    # inchik = Column(Text(), nullable=False, index=True)
+    inchik = Column(Text(), nullable=False)
     inchis = Column(Text(), nullable=False)
+    Index('ix_inchik', inchik, postgresql_using='hash')
 
 class NonIsomol(Base):
     __tablename__ = 'nonisomol'
     id = Column(Integer, primary_key=True)
 
-    smiles = Column(Text(), nullable=False, unique=True)
+    # smiles = Column(Text(), nullable=False, unique=True)
+    smiles = Column(Text(), nullable=False)
     inchik = Column(Text())
     inchis = Column(Text())
     hac = Column(SmallInteger())
@@ -31,16 +34,19 @@ class NonIsomol(Base):
     fs = Column(SmallInteger(), index=True)
     inchi_id = Column(Integer, ForeignKey('inchi.id'), nullable=False)
     inchi = relationship(Inchi)
+    Index('uq_noniso_smiles', smiles, postgresql_using='hash')
 
 class Isomol(Base):
     __tablename__ = 'isomol'
     id = Column(Integer, primary_key=True)
 
-    smiles = Column(Text(), nullable=False, unique=True)
+    # smiles = Column(Text(), nullable=False, unique=True)
+    smiles = Column(Text(), nullable=False)
     inchik = Column(Text())
     inchis = Column(Text())
     nonisomol_id = Column(Integer, ForeignKey('nonisomol.id'), nullable=False)
     nonisomol = relationship(NonIsomol)
+    Index('uq_iso_smiles', smiles, postgresql_using='hash')
 
 class Source(Base):
     __tablename__ = 'source'
@@ -51,7 +57,7 @@ class Source(Base):
     currency = Column(Text())
 
     __table_args__ = (
-        UniqueConstraint('name', 'version', name='uq_source'),
+        UniqueConstraint(name, version, name='uq_source'),
     )
 
 class MolInput(Base):
@@ -73,7 +79,7 @@ class MolInput(Base):
     source = relationship(Source)
 
     __table_args__ = (
-        UniqueConstraint('source_id', 'name', name='uq_input'),
+        UniqueConstraint(source_id, name, name='uq_input'),
     )
 
 
@@ -127,11 +133,12 @@ class MoleculeLoader:
         else:
             self.url = os.environ.get('FM_DB_URL')
         if self.url is None:
-            raise('ERROR: Must define database URL using the db_url parameter or the FM_DB_URL environment variable')
+            raise 'ERROR: Must define database URL using the db_url parameter or the FM_DB_URL environment variable'
 
-        self.engine = create_engine(self.url)
+        self.engine = create_engine(self.url, isolation_level="READ UNCOMMITTED")
         self.DBSession = sessionmaker(bind=self.engine)
-        self.frag_cache = {}
+
+        # loader stats
         self.count = 0
         self.inchi_hits = 0
         self.inchi_miss = 0
@@ -139,6 +146,13 @@ class MoleculeLoader:
         self.noniso_miss = 0
         self.iso_hits = 0
         self.iso_miss = 0
+
+        # cache stats
+        self.frag_cache = {}
+        self.cache_found = 0
+        self.cache_miss_exists = 0
+        self.cache_miss_not_exists = 0
+        self.already_fragmented = 0
 
     def gen_std_info(self, nonisosmiles):
         mol = Chem.MolFromSmiles(nonisosmiles)
@@ -219,7 +233,13 @@ class MoleculeLoader:
         return ms
 
     def insert_price(self, session, quantity, price, mol_source):
-        p = Price(quantity_mg=quantity, price=price, molsource=mol_source)
+        """"
+        price will either be an integer value or a tuple of size 2 with a min and max integer value
+        """
+        if type(price) is tuple:
+            p = Price(quantity_mg=quantity, price_min=price[0], price_max=price[1], molsource=mol_source)
+        else:
+            p = Price(quantity_mg=quantity, price=price, molsource=mol_source)
         session.add(p)
         return p
 
@@ -313,10 +333,24 @@ class MoleculeLoader:
         inp.finished_date = func.now()
         session.commit()
 
-    def read_mols_for_fragmentation(self, session, frag_status=None, limit=100):
-        mols = session.query(NonIsomol).filter(NonIsomol.fs == frag_status).limit(limit).all()
+    def read_mols_for_fragmentation(self, session, hac_max=36, frag_status=None, limit=100, source_id=None):
+        if source_id:
+            mols = session.query(NonIsomol).join(MolSource)\
+                .join(Source)\
+                .filter(NonIsomol.fs == frag_status)\
+                .filter(NonIsomol.hac <= hac_max)\
+                .filter(Source.id == source_id)\
+                .limit(limit)\
+                .all()
+        else:
+            mols = session.query(NonIsomol)\
+                .filter(NonIsomol.fs == frag_status)\
+                .filter(NonIsomol.hac <= hac_max)\
+                .limit(limit)\
+                .all()
         for mol in mols:
             mol.fs = 1
+            self.frag_cache[mol.smiles] = mol
         return mols
 
     def read_smiles_for_fragmentation(self, session, smiles):
@@ -327,46 +361,75 @@ class MoleculeLoader:
 
     def insert_frags(self, session, nonisomol, node_holder):
 
-        cache = self.frag_cache
-
-        noniso_added = set()
+        need_processing = set()
         inserted_nonisomol_count = 0
         inserted_edge_count = 0
-        for edge in node_holder.get_edges():
-            p = edge.NODES[0]
-            c = edge.NODES[1]
-            p_smiles = p.SMILES
-            c_smiles = c.SMILES
-            label = edge.get_label()
-            # print("Looking at edge {0} {1} {2}".format(p_smiles, c_smiles, label))
-            p_noniso, p_added = self.find_or_insert_nonisofrag(session, p_smiles)
-            c_noniso, c_added = self.find_or_insert_nonisofrag(session, c_smiles)
-            # print("Parent/Child added: {0} {1}".format(p_added, c_added))
-            if p_added:
-                noniso_added.add(p_smiles)
-                inserted_nonisomol_count += 1
-            if c_added:
-                noniso_added.add(c_smiles)
-                inserted_nonisomol_count += 1
 
-            if  p_smiles in noniso_added or c_smiles in noniso_added:
-                # print("Edge added for {0} {1}".format(p_noniso.id, c_noniso.id))
-                e = Edge(label=label, parent=p_noniso, child=c_noniso)
-                session.add(e)
-                inserted_edge_count += 1
-            # else:
-            #     print("Edges for {0} {1} already present".format(p_noniso.id, c_noniso.id))
+        # if no edges then just set status to complete
+        if node_holder.size()[1] == 0:
+            if nonisomol.fs != 2:
+                # print("Marking as complete", nonisomol.smiles)
+                nonisomol.fs = 2
+        else:
+            # so we need to process the edges
 
-        nonisomol.fs = 2
-        print("Inserted {0} smiles and {1} edges".format(inserted_nonisomol_count, inserted_edge_count))
-        print("Cache now has {0} entries".format(len(cache)))
-        return inserted_nonisomol_count, inserted_edge_count
+            cache = self.frag_cache
+
+            # print("Handling", nonisomol.smiles)
+
+            noniso_added = set()
+            parents_encountered = set()
+            for edge in node_holder.get_edges():
+                p = edge.NODES[0]
+                c = edge.NODES[1]
+                p_smiles = p.SMILES
+                c_smiles = c.SMILES
+                label = edge.get_label()
+                # print("Looking at edge {0} {1} {2}".format(p_smiles, c_smiles, label))
+                p_noniso, p_added = self.find_or_insert_nonisofrag(session, p_smiles)
+                c_noniso, c_added = self.find_or_insert_nonisofrag(session, c_smiles)
+                # print("Parent/Child added: {0} {1}".format(p_added, c_added))
+                parents_encountered.add(p_noniso)
+                if p_added:
+                    # print("Parent added", p_smiles)
+                    noniso_added.add(p_smiles)
+                    inserted_nonisomol_count += 1
+                # else:
+                #     print("Parent exists, status is {0}".format(p_noniso.fs))
+                if c_added:
+                    # print("Child added", c_smiles)
+                    noniso_added.add(c_smiles)
+                    need_processing.add(c_noniso)
+                    inserted_nonisomol_count += 1
+                else:
+                    if c_noniso.fs != 2:
+                        need_processing.add(c_noniso)
+                    # print("Child exists {0}, status is {1}".format(c_smiles, c_noniso.fs))
+
+                if  p_noniso.fs != 2:
+                    # print("Edge added for {0} {1}".format(p_noniso.id, c_noniso.id))
+                    e = Edge(label=label, parent=p_noniso, child=c_noniso)
+                    session.add(e)
+                    inserted_edge_count += 1
+                # else:
+                #     print("Edges for {0} {1} already present".format(p_noniso.id, c_noniso.id))
+
+            for p in parents_encountered:
+                if p.fs != 2:
+                    p.fs = 2
+
+            nonisomol.fs = 2
+            # print("Inserted {0} smiles and {1} edges".format(inserted_nonisomol_count, inserted_edge_count))
+            # print("Cache now has {0} entries. {1} need processing".format(len(cache), len(need_processing)))
+
+        return need_processing, inserted_nonisomol_count, inserted_edge_count
 
     def find_or_insert_nonisofrag(self, session, smiles):
         cache = self.frag_cache
 
         if smiles in cache:
             # print("Molecule {0} already present as {1}".format(smiles, cache[smiles].id))
+            self.cache_found += 1
             return cache[smiles], False
         else:
             # print("Looking to add Molecule {0}".format(smiles))
@@ -376,13 +439,18 @@ class MoleculeLoader:
             #     print("Added InChi {}".format(inchis))
             # else:
             #     print("Found existing InChi {}".format(inchis))
-            noniso, added = self.insert_noniso(session, inchi, smiles, inchis, inchik, hac, rac, fs=2)
-            # if added:
+            noniso, added = self.insert_noniso(session, inchi, smiles, inchis, inchik, hac, rac, fs=1)
+            if added:
+                self.cache_miss_not_exists += 1
             #     print("Added noniso {}".format(smiles))
-            # else:
+            else:
+                self.cache_miss_exists += 1
             #     print("Found existing noniso {}".format(smiles))
             cache[smiles] = noniso
             return noniso, added
+
+    def get_cache_stats(self):
+        return len(self.frag_cache), self.cache_found, self.cache_miss_not_exists, self.cache_miss_exists
 
 
 def main():

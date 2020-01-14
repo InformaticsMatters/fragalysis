@@ -386,19 +386,227 @@ real    79m13.984s
 user    20m46.602s
 sys     0m35.645s
 
+# reload 2020 data
 
-# table and index stats
+000-000
+inchi hits/misses 499788 37
+noniso hits/misses 499787 38
+iso hits/misses 139280 11
+2020-01-11T20:59:23 INFO # Processed 499830 records
+2020-01-11T20:59:23 INFO # 499,830 vendor molecules
+2020-01-11T20:59:23 INFO # 110 vendor molecule failures
+2020-01-11T20:59:23 INFO # 5 inchi generation failures
+
+real    173m51.705s
+user    77m9.374s
+sys     1m33.576s
+
+
+000-500
+inchi hits/misses 499826 114
+noniso hits/misses 499825 115
+iso hits/misses 102758 15
+2020-01-11T20:57:48 INFO # Processed 499946 records
+2020-01-11T20:57:48 INFO # 499,946 vendor molecules
+2020-01-11T20:57:48 INFO # 2 vendor molecule failures
+2020-01-11T20:57:48 INFO # 6 inchi generation failures
+
+real    171m10.071s
+user    75m45.489s
+sys     1m32.507s
+
+001-000
+inchi hits/misses 499611 164
+noniso hits/misses 499611 164
+iso hits/misses 136259 35
+2020-01-12T14:13:52 INFO # Processed 499782 records
+2020-01-12T14:13:52 INFO # 499,782 vendor molecules
+2020-01-12T14:13:52 INFO # 34 vendor molecule failures
+2020-01-12T14:13:52 INFO # 7 inchi generation failures
+
+real    228m47.189s
+user    96m45.230s
+sys     1m51.436s
+
+001-500
+inchi hits/misses 498975 113
+noniso hits/misses 498975 113
+iso hits/misses 63395 34
+2020-01-12T14:13:01 INFO # Processed 499100 records
+2020-01-12T14:13:01 INFO # 499,100 vendor molecules
+2020-01-12T14:13:01 INFO # 31 vendor molecule failures
+2020-01-12T14:13:01 INFO # 12 inchi generation failures
+
+real    227m45.267s
+user    95m59.592s
+sys     1m45.603s
+
+002-000
+inchi hits/misses 499336 68
+noniso hits/misses 499334 70
+iso hits/misses 22690 7
+2020-01-12T14:10:10 INFO # Processed 499405 records
+2020-01-12T14:10:10 INFO # 499,405 vendor molecules
+2020-01-12T14:10:10 INFO # 5 vendor molecule failures
+2020-01-12T14:10:10 INFO # 1 inchi generation failures
+
+real    224m44.640s
+user    95m2.569s
+sys     1m37.612s
+
+002-500
+inchi hits/misses 499149 37
+noniso hits/misses 499149 37
+iso hits/misses 20581 5
+2020-01-12T14:13:40 INFO # Processed 499190 records
+2020-01-12T14:13:40 INFO # 499,190 vendor molecules
+2020-01-12T14:13:40 INFO # 14 vendor molecule failures
+2020-01-12T14:13:40 INFO # 4 inchi generation failures
+
+real    228m1.143s
+user    96m46.200s
+sys     1m42.618s
+
+003-000
+inchi hits/misses 497813 538
+noniso hits/misses 497804 547
+iso hits/misses 47850 66
+2020-01-12T14:15:37 INFO # Processed 498351 records
+2020-01-12T14:15:37 INFO # 498,351 vendor molecules
+2020-01-12T14:15:37 INFO # 9 vendor molecule failures
+2020-01-12T14:15:37 INFO # 0 inchi generation failures
+
+real    229m39.307s
+user    97m40.849s
+sys     1m42.904s
+
+003-500
+inchi hits/misses 499132 28
+noniso hits/misses 499132 28
+iso hits/misses 14801 1
+2020-01-12T14:10:31 INFO # Processed 499162 records
+2020-01-12T14:10:31 INFO # 499,162 vendor molecules
+2020-01-12T14:10:31 INFO # 33 vendor molecule failures
+2020-01-12T14:10:31 INFO # 2 inchi generation failures
+
+real    224m23.228s
+user    93m2.290s
+sys     1m37.011s
+
+004-000
+inchi hits/misses 496640 59
+noniso hits/misses 496640 59
+iso hits/misses 6855 46
+2020-01-12T14:11:30 INFO # Processed 496699 records
+2020-01-12T14:11:30 INFO # 496,699 vendor molecules
+2020-01-12T14:11:30 INFO # 5 vendor molecule failures
+2020-01-12T14:11:30 INFO # 0 inchi generation failures
+
+real    225m8.911s
+user    94m14.203s
+sys     2m11.339s
+
+004-500
+inchi hits/misses 499711 100
+noniso hits/misses 499709 102
+iso hits/misses 37386 26
+2020-01-12T14:14:27 INFO # Processed 499813 records
+2020-01-12T14:14:27 INFO # 499,813 vendor molecules
+2020-01-12T14:14:27 INFO # 14 vendor molecule failures
+2020-01-12T14:14:27 INFO # 2 inchi generation failures
+
+real    227m56.805s
+user    92m18.074s
+sys     1m50.601s
+
+005-500
+inchi hits/misses 499644 187
+noniso hits/misses 499640 191
+iso hits/misses 44951 33
+2020-01-12T14:17:13 INFO # Processed 499838 records
+2020-01-12T14:17:13 INFO # 499,838 vendor molecules
+2020-01-12T14:17:13 INFO # 37 vendor molecule failures
+2020-01-12T14:17:13 INFO # 7 inchi generation failures
+
+real    230m25.043s
+user    91m7.259s
+sys     1m55.692s
+
+006-000
+inchi hits/misses 499789 102
+noniso hits/misses 499789 102
+iso hits/misses 91356 25
+2020-01-12T14:17:56 INFO # Processed 499900 records
+2020-01-12T14:17:56 INFO # 499,900 vendor molecules
+2020-01-12T14:17:56 INFO # 69 vendor molecule failures
+2020-01-12T14:17:56 INFO # 9 inchi generation failures
+
+real    230m58.099s
+user    92m50.743s
+sys     1m43.467s
+
+006-500
+inchi hits/misses 499564 189
+noniso hits/misses 499562 191
+iso hits/misses 67235 97
+2020-01-12T14:16:52 INFO # Processed 499764 records
+2020-01-12T14:16:52 INFO # 499,764 vendor molecules
+2020-01-12T14:16:52 INFO # 126 vendor molecule failures
+2020-01-12T14:16:52 INFO # 11 inchi generation failures
+
+real    229m43.625s
+user    92m12.651s
+sys     2m25.918s
+
+007-000
+inchi hits/misses 494075 3275
+noniso hits/misses 494073 3277
+iso hits/misses 114913 2349
+2020-01-12T14:06:31 INFO # Processed 497387 records
+2020-01-12T14:06:31 INFO # 497,387 vendor molecules
+2020-01-12T14:06:31 INFO # 129 vendor molecule failures
+2020-01-12T14:06:31 INFO # 37 inchi generation failures
+
+real    219m9.488s
+user    93m32.144s
+sys     1m38.622s
+
+007-500
+inchi hits/misses 83836 35764
+noniso hits/misses 83630 35970
+iso hits/misses 18479 6057
+2020-01-12T11:27:39 INFO # Processed 119610 records
+2020-01-12T11:27:39 INFO # 119,610 vendor molecules
+2020-01-12T11:27:39 INFO # 122 vendor molecule failures
+2020-01-12T11:27:39 INFO # 10 inchi generation failures
+
+real    59m59.982s
+user    23m34.107s
+sys     0m29.004s
+
+#########################################################
+# loading chembl into new empty db using latin1 charset #
+#########################################################
+
+2020-01-12T19:02:05 INFO # Processed 1870451 records
+2020-01-12T19:02:05 INFO # 1,870,451 vendor molecules
+2020-01-12T19:02:05 INFO # 0 vendor molecule failures
+2020-01-12T19:02:05 INFO # 4 inchi generation failures
+
+real    469m19.786s
+user    282m24.047s
+sys     7m31.630s
 
 fairmolecules=# \dt+
                          List of relations
  Schema |    Name    | Type  |  Owner   |    Size    | Description
 --------+------------+-------+----------+------------+-------------
  public | edge       | table | postgres | 8192 bytes |
- public | inchi      | table | postgres | 4007 MB    |
- public | isomol     | table | postgres | 750 MB     |
- public | mol_source | table | postgres | 3305 MB    |
- public | nonisomol  | table | postgres | 5372 MB    |
- public | price      | table | postgres | 698 MB     |
+ public | inchi      | table | postgres | 353 MB     |
+ public | isomol     | table | postgres | 216 MB     |
+ public | mol_source | table | postgres | 209 MB     |
+ public | nonisomol  | table | postgres | 476 MB     |
+ public | price      | table | postgres | 0 bytes    |
  public | source     | table | postgres | 16 kB      |
 (7 rows)
 
@@ -407,16 +615,100 @@ fairmolecules=# \di+
  Schema |         Name         | Type  |  Owner   |   Table    |    Size    | Description
 --------+----------------------+-------+----------+------------+------------+-------------
  public | edge_pkey            | index | postgres | edge       | 8192 bytes |
- public | inchi_pkey           | index | postgres | inchi      | 531 MB     |
- public | isomol_pkey          | index | postgres | isomol     | 64 MB      |
- public | isomol_smiles_key    | index | postgres | isomol     | 275 MB     |
- public | ix_inchi_inchik      | index | postgres | inchi      | 1530 MB    |
- public | ix_nonisomol_fs      | index | postgres | nonisomol  | 685 MB     |
- public | mol_source_pkey      | index | postgres | mol_source | 690 MB     |
- public | nonisomol_pkey       | index | postgres | nonisomol  | 541 MB     |
- public | nonisomol_smiles_key | index | postgres | nonisomol  | 1767 MB    |
- public | price_pkey           | index | postgres | price      | 353 MB     |
+ public | inchi_pkey           | index | postgres | inchi      | 36 MB      |
+ public | isomol_pkey          | index | postgres | isomol     | 13 MB      |
+ public | isomol_smiles_key    | index | postgres | isomol     | 83 MB      |
+ public | ix_inchi_inchik      | index | postgres | inchi      | 105 MB     |
+ public | ix_nonisomol_fs      | index | postgres | nonisomol  | 46 MB      |
+ public | mol_source_pkey      | index | postgres | mol_source | 40 MB      |
+ public | nonisomol_pkey       | index | postgres | nonisomol  | 36 MB      |
+ public | nonisomol_smiles_key | index | postgres | nonisomol  | 166 MB     |
+ public | price_pkey           | index | postgres | price      | 8192 bytes |
  public | source_pkey          | index | postgres | source     | 16 kB      |
 (11 rows)
 
+#########################################################
+# loading chembl into new empty db using utf-8 charset  #
+#########################################################
+
+2020-01-13T15:29:53 INFO # Processed 1870451 records
+2020-01-13T15:29:53 INFO # 1,870,451 vendor molecules
+2020-01-13T15:29:53 INFO # 0 vendor molecule failures
+2020-01-13T15:29:53 INFO # 4 inchi generation failures
+
+real    467m38.131s
+user    282m40.468s
+sys     7m31.251s
+
+fairmolecules2=# \dt+
+                         List of relations
+ Schema |    Name    | Type  |  Owner   |    Size    | Description
+--------+------------+-------+----------+------------+-------------
+ public | edge       | table | postgres | 8192 bytes |
+ public | inchi      | table | postgres | 353 MB     |
+ public | isomol     | table | postgres | 216 MB     |
+ public | mol_source | table | postgres | 209 MB     |
+ public | nonisomol  | table | postgres | 476 MB     |
+ public | price      | table | postgres | 0 bytes    |
+ public | source     | table | postgres | 16 kB      |
+(7 rows)
+
+fairmolecules2=# \di+
+                                    List of relations
+ Schema |         Name         | Type  |  Owner   |   Table    |    Size    | Description
+--------+----------------------+-------+----------+------------+------------+-------------
+ public | edge_pkey            | index | postgres | edge       | 8192 bytes |
+ public | inchi_pkey           | index | postgres | inchi      | 36 MB      |
+ public | isomol_pkey          | index | postgres | isomol     | 13 MB      |
+ public | isomol_smiles_key    | index | postgres | isomol     | 83 MB      |
+ public | ix_inchi_inchik      | index | postgres | inchi      | 105 MB     |
+ public | ix_nonisomol_fs      | index | postgres | nonisomol  | 46 MB      |
+ public | mol_source_pkey      | index | postgres | mol_source | 40 MB      |
+ public | nonisomol_pkey       | index | postgres | nonisomol  | 36 MB      |
+ public | nonisomol_smiles_key | index | postgres | nonisomol  | 165 MB     |
+ public | price_pkey           | index | postgres | price      | 8192 bytes |
+ public | source_pkey          | index | postgres | source     | 16 kB      |
+(11 rows)
+
+
+# load chembl using hash indexes
+
+2020-01-13T23:23:27 INFO # Processed 1870451 records
+2020-01-13T23:23:27 INFO # 1,870,451 vendor molecules
+2020-01-13T23:23:27 INFO # 0 vendor molecule failures
+2020-01-13T23:23:27 INFO # 4 inchi generation failures
+
+real    453m0.441s
+user    280m29.332s
+sys     7m25.830s
+
+fairmolecules=# \dt+
+                         List of relations
+ Schema |    Name    | Type  |  Owner   |    Size    | Description
+--------+------------+-------+----------+------------+-------------
+ public | edge       | table | postgres | 8192 bytes |
+ public | inchi      | table | postgres | 353 MB     |
+ public | isomol     | table | postgres | 216 MB     |
+ public | mol_source | table | postgres | 209 MB     |
+ public | nonisomol  | table | postgres | 476 MB     |
+ public | price      | table | postgres | 0 bytes    |
+ public | source     | table | postgres | 16 kB      |
+(7 rows)
+
+fairmolecules=# \di+
+                                  List of relations
+ Schema |       Name       | Type  |  Owner   |   Table    |    Size    | Description
+--------+------------------+-------+----------+------------+------------+-------------
+ public | edge_pkey        | index | postgres | edge       | 8192 bytes |
+ public | inchi_pkey       | index | postgres | inchi      | 36 MB      |
+ public | isomol_pkey      | index | postgres | isomol     | 13 MB      |
+ public | ix_inchik        | index | postgres | inchi      | 60 MB      |
+ public | ix_nonisomol_fs  | index | postgres | nonisomol  | 46 MB      |
+ public | mol_source_pkey  | index | postgres | mol_source | 40 MB      |
+ public | nonisomol_pkey   | index | postgres | nonisomol  | 36 MB      |
+ public | price_pkey       | index | postgres | price      | 8192 bytes |
+ public | source_pkey      | index | postgres | source     | 16 kB      |
+ public | uq_iso_smiles    | index | postgres | isomol     | 20 MB      |
+ public | uq_noniso_smiles | index | postgres | nonisomol  | 61 MB      |
+(11 rows)
 
