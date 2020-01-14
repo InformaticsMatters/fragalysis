@@ -12,7 +12,7 @@ We create a 'standardised-compounds.tab.gz' file that contains a 1st-line
 'header' formed from the _OUTPUT_COLUMNS list.
 
 Alan Christie
-August 2019
+January 2020
 """
 
 import argparse

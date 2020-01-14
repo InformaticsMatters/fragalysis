@@ -40,7 +40,7 @@ Important Note  If the graph content changes in any way the
                 (e.g.  new columns, new labels, new or modified anything)
                 our version must change.
 Alan Christie
-July 2019
+January 2020
 """
 
 import argparse
