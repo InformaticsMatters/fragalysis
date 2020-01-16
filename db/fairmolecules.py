@@ -446,13 +446,12 @@ class MoleculeLoader:
                             # it's just possible that another process has recently also handled these edges so to be
                             # safe we do a delete operation to make sure we don't get duplicates
                             if count == 0:
-                                existing_edges = session.query(Edge)\
+                                deleted_count = session.query(Edge)\
                                     .filter(Edge.parent_id == p_noniso.id)\
                                     .filter(Edge.child_id == c_noniso.id)\
-                                    .all()
-                                if len(existing_edges) > 0:
-                                    print("Deleting existing edges for {0} and {1}".format(p_noniso.id, c_noniso.id))
-                                    session.delete(existing_edges)
+                                    .delete()
+                                if deleted_count:
+                                    print("WARNING: existing edges found for {0} -> {1}".format(p_noniso.id, c_noniso.id))
                                 count += 1
 
                             # print("Edge added for {0} {1}".format(p_noniso.id, c_noniso.id))

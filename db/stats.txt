@@ -854,3 +854,188 @@ Frag ID is 50841879
 real	149m46.551s
 user	89m10.264s
 sys	2m0.239s
+
+##########################
+# Molport stats on STFC
+##########################
+DB - postgres on c3.large node.
+   - WAL on system disk
+   - shared_buffers=8GB
+
+Loading 2019-12 data
+--------------------
+iis_smiles-000-000-000--000-499-999.txt.gz
+
+2020-01-16T14:03:21 INFO # Processed 499830 records
+2020-01-16T14:03:21 INFO # 499,830 vendor molecules
+2020-01-16T14:03:21 INFO # 110 vendor molecule failures
+2020-01-16T14:03:21 INFO # 5 inchi generation failures
+
+real    295m1.290s
+user    137m4.196s
+sys     3m36.810s
+
+iis_smiles-000-500-000--000-999-999.txt.gz
+
+2020-01-16T13:59:17 INFO # Processed 499945 records
+2020-01-16T13:59:17 INFO # 499,945 vendor molecules
+2020-01-16T13:59:17 INFO # 2 vendor molecule failures
+2020-01-16T13:59:17 INFO # 6 inchi generation failures
+
+real    290m35.603s
+user    135m30.624s
+sys     3m18.010s
+
+iis_smiles-001-000-000--001-499-999.txt.gz
+
+2020-01-16T14:02:10 INFO # Processed 499785 records
+2020-01-16T14:02:10 INFO # 499,785 vendor molecules
+2020-01-16T14:02:10 INFO # 31 vendor molecule failures
+2020-01-16T14:02:10 INFO # 7 inchi generation failures
+
+real    293m17.972s
+user    136m12.693s
+sys     4m14.089s
+
+iis_smiles-001-500-000--001-999-999.txt.gz
+
+2020-01-16T13:57:40 INFO # Processed 499098 records
+2020-01-16T13:57:40 INFO # 499,098 vendor molecules
+2020-01-16T13:57:40 INFO # 34 vendor molecule failures
+2020-01-16T13:57:40 INFO # 12 inchi generation failures
+
+real    288m38.473s
+user    134m25.392s
+sys     3m56.742s
+
+iis_smiles-002-000-000--002-499-999.txt.gz
+
+2020-01-16T13:57:39 INFO # Processed 499410 records
+2020-01-16T13:57:39 INFO # 499,410 vendor molecules
+2020-01-16T13:57:39 INFO # 5 vendor molecule failures
+2020-01-16T13:57:39 INFO # 1 inchi generation failures
+
+real    288m24.643s
+user    135m3.209s
+sys     3m8.980s
+
+iis_smiles-002-500-000--002-999-999.txt.gz
+
+2020-01-16T13:58:17 INFO # Processed 499183 records
+2020-01-16T13:58:17 INFO # 499,183 vendor molecules
+2020-01-16T13:58:17 INFO # 15 vendor molecule failures
+2020-01-16T13:58:17 INFO # 4 inchi generation failures
+
+real    288m17.503s
+user    136m19.124s
+sys     3m23.580s
+
+iis_smiles-003-000-000--003-499-999.txt.gz
+
+2020-01-16T14:01:46 INFO # Processed 498353 records
+2020-01-16T14:01:46 INFO # 498,353 vendor molecules
+2020-01-16T14:01:46 INFO # 6 vendor molecule failures
+2020-01-16T14:01:46 INFO # 0 inchi generation failures
+
+real    291m35.165s
+user    136m31.429s
+sys     3m46.106s
+
+iis_smiles-003-500-000--003-999-999.txt.gz
+
+2020-01-16T13:59:48 INFO # Processed 499168 records
+2020-01-16T13:59:48 INFO # 499,168 vendor molecules
+2020-01-16T13:59:48 INFO # 35 vendor molecule failures
+2020-01-16T13:59:48 INFO # 2 inchi generation failures
+
+real    289m21.502s
+user    133m44.237s
+sys     3m13.560s
+
+iis_smiles-004-000-000--004-499-999.txt.gz
+
+2020-01-16T13:54:20 INFO # Processed 496679 records
+2020-01-16T13:54:20 INFO # 496,679 vendor molecules
+2020-01-16T13:54:20 INFO # 5 vendor molecule failures
+2020-01-16T13:54:20 INFO # 0 inchi generation failures
+
+real    283m15.500s
+user    132m22.968s
+sys     3m51.447s
+
+iis_smiles-004-500-000--004-999-999.txt.gz
+
+2020-01-16T13:51:29 INFO # Processed 499814 records
+2020-01-16T13:51:29 INFO # 499,814 vendor molecules
+2020-01-16T13:51:29 INFO # 14 vendor molecule failures
+2020-01-16T13:51:29 INFO # 2 inchi generation failures
+
+real    280m9.550s
+user    130m38.610s
+sys     3m35.123s
+
+iis_smiles-005-000-000--005-499-999.txt.gz
+
+020-01-16T13:58:52 INFO # Processed 499909 records
+2020-01-16T13:58:52 INFO # 499,909 vendor molecules
+2020-01-16T13:58:52 INFO # 26 vendor molecule failures
+2020-01-16T13:58:52 INFO # 3 inchi generation failures
+
+real    284m0.564s
+user    132m1.820s
+sys     3m10.348s
+
+iis_smiles-005-500-000--005-999-999.txt.gz
+
+2020-01-16T14:00:34 INFO # Processed 499854 records
+2020-01-16T14:00:34 INFO # 499,854 vendor molecules
+2020-01-16T14:00:34 INFO # 33 vendor molecule failures
+2020-01-16T14:00:34 INFO # 6 inchi generation failures
+
+real    285m32.273s
+user    130m59.744s
+sys     3m26.493s
+
+iis_smiles-006-000-000--006-499-999.txt.gz
+
+2020-01-16T14:00:31 INFO # Processed 499893 records
+2020-01-16T14:00:31 INFO # 499,893 vendor molecules
+2020-01-16T14:00:31 INFO # 72 vendor molecule failures
+2020-01-16T14:00:31 INFO # 10 inchi generation failures
+
+real    285m13.643s
+user    132m22.308s
+sys     3m21.433s
+
+iis_smiles-006-500-000--006-999-999.txt.gz
+
+2020-01-16T14:00:54 INFO # Processed 499822 records
+2020-01-16T14:00:54 INFO # 499,822 vendor molecules
+2020-01-16T14:00:54 INFO # 73 vendor molecule failures
+2020-01-16T14:00:54 INFO # 10 inchi generation failures
+
+real    285m25.309s
+user    132m40.782s
+sys     3m23.996s
+
+iis_smiles-007-000-000--007-499-999.txt.gz
+
+2020-01-16T14:03:03 INFO # Processed 497429 records
+2020-01-16T14:03:03 INFO # 497,429 vendor molecules
+2020-01-16T14:03:03 INFO # 161 vendor molecule failures
+2020-01-16T14:03:03 INFO # 37 inchi generation failures
+
+real    287m11.590s
+user    133m41.960s
+sys     3m6.434s
+
+iis_smiles-007-500-000--007-999-999.txt.gz
+
+2020-01-16T10:18:24 INFO # Processed 113915 records
+2020-01-16T10:18:24 INFO # 113,915 vendor molecules
+2020-01-16T10:18:24 INFO # 195 vendor molecule failures
+2020-01-16T10:18:24 INFO # 10 inchi generation failures
+
+real    62m21.376s
+user    30m9.370s
+sys     0m48.130s
