@@ -57,7 +57,7 @@ expected_min_num_cols = 3
 smiles_col = 0
 compound_col = 1
 cost_col = {1: 2}
-expected_input_cols = {compound_col: 'id',
+expected_input_cols = {compound_col: 'chemspace_id',
                        smiles_col: 'smiles',
                        cost_col[1]: 'price_1g_usd'}
 
