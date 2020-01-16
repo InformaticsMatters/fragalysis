@@ -224,12 +224,12 @@ def parse_cost(str):
 
 if __name__ == '__main__':
 
-    print(str(parse_cost('< 50')))
-    print(str(parse_cost('> 50')))
-    print(str(parse_cost('5 - 50')))
-    print(str(parse_cost('null')))
-    print(str(parse_cost('5')))
-    sys.exit(0)
+    # print(str(parse_cost('< 50')))
+    # print(str(parse_cost('> 50')))
+    # print(str(parse_cost('5 - 50')))
+    # print(str(parse_cost('null')))
+    # print(str(parse_cost('5')))
+    # sys.exit(0)
 
     parser = argparse.ArgumentParser('Vendor Compound Standardiser (MolPort)')
     parser.add_argument('--input', '-i',
