@@ -1,4 +1,5 @@
-import os, sys, argparse
+import os, sys, argparse, collections
+from random import randint
 from sqlalchemy import Column, PrimaryKeyConstraint, ForeignKey, Index, UniqueConstraint, Integer, String, Text, SmallInteger, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
@@ -31,7 +32,7 @@ class NonIsomol(Base):
     hac = Column(SmallInteger())
     rac = Column(SmallInteger())
     fc = Column(SmallInteger())
-    fs = Column(SmallInteger(), index=True)
+    fs = Column(Integer(), index=True)
     inchi_id = Column(Integer, ForeignKey('inchi.id'), nullable=False)
     inchi = relationship(Inchi)
     Index('uq_noniso_smiles', smiles, postgresql_using='hash')
@@ -135,6 +136,8 @@ class MoleculeLoader:
         if self.url is None:
             raise 'ERROR: Must define database URL using the db_url parameter or the FM_DB_URL environment variable'
 
+        self.frag_id = randint(1, 100000000)
+
         self.engine = create_engine(self.url, isolation_level="READ UNCOMMITTED")
         self.DBSession = sessionmaker(bind=self.engine)
 
@@ -148,11 +151,13 @@ class MoleculeLoader:
         self.iso_miss = 0
 
         # cache stats
-        self.frag_cache = {}
+        self.frag_cache = dict()
         self.cache_found = 0
         self.cache_miss_exists = 0
         self.cache_miss_not_exists = 0
         self.already_fragmented = 0
+
+        print("Frag ID is", self.frag_id)
 
     def gen_std_info(self, nonisosmiles):
         mol = Chem.MolFromSmiles(nonisosmiles)
@@ -349,80 +354,122 @@ class MoleculeLoader:
                 .limit(limit)\
                 .all()
         for mol in mols:
-            mol.fs = 1
+            mol.fs = self.frag_id
             self.frag_cache[mol.smiles] = mol
+
+        session.commit()
         return mols
 
     def read_smiles_for_fragmentation(self, session, smiles):
         mol = session.query(NonIsomol).filter(NonIsomol.smiles == smiles).first()
         if mol:
-            mol.fs = 1
+            mol.fs = self.frag_id
+            self.frag_cache[mol.smiles] = mol
+        session.commit()
         return mol
 
-    def insert_frags(self, session, nonisomol, node_holder):
+    def insert_frags(self, session, node_holder):
 
-        need_processing = set()
+        nonisomols_needing_further_processing = set()
         inserted_nonisomol_count = 0
         inserted_edge_count = 0
 
         # if no edges then just set status to complete
         if node_holder.size()[1] == 0:
-            if nonisomol.fs != 2:
+            smiles = node_holder.node_list.pop().SMILES
+            nonisomol, added = self.find_or_insert_nonisofrag(session, smiles)
+            if nonisomol.fs == self.frag_id:
                 # print("Marking as complete", nonisomol.smiles)
-                nonisomol.fs = 2
+                nonisomol.fs = 0
         else:
             # so we need to process the edges
-
-            cache = self.frag_cache
-
             # print("Handling", nonisomol.smiles)
 
-            noniso_added = set()
-            parents_encountered = set()
+            # group the edges by parent and prepare the nonisomols
+            grouped_parent_edges = collections.OrderedDict()
+            all_nonisomols_encountered = {}
+            parent_nonisomols_encountered = set()
             for edge in node_holder.get_edges():
-                p = edge.NODES[0]
-                c = edge.NODES[1]
-                p_smiles = p.SMILES
-                c_smiles = c.SMILES
-                label = edge.get_label()
-                # print("Looking at edge {0} {1} {2}".format(p_smiles, c_smiles, label))
-                p_noniso, p_added = self.find_or_insert_nonisofrag(session, p_smiles)
-                c_noniso, c_added = self.find_or_insert_nonisofrag(session, c_smiles)
-                # print("Parent/Child added: {0} {1}".format(p_added, c_added))
-                parents_encountered.add(p_noniso)
-                if p_added:
-                    # print("Parent added", p_smiles)
-                    noniso_added.add(p_smiles)
-                    inserted_nonisomol_count += 1
-                # else:
-                #     print("Parent exists, status is {0}".format(p_noniso.fs))
-                if c_added:
-                    # print("Child added", c_smiles)
-                    noniso_added.add(c_smiles)
-                    need_processing.add(c_noniso)
-                    inserted_nonisomol_count += 1
+                # handle the parent nonisomol
+                p_smiles = edge.NODES[0].SMILES
+                if p_smiles in grouped_parent_edges:
+                    grouped_parent_edges[p_smiles].append(edge)
                 else:
-                    if c_noniso.fs != 2:
-                        need_processing.add(c_noniso)
-                    # print("Child exists {0}, status is {1}".format(c_smiles, c_noniso.fs))
+                    # it's new to this group of edges
+                    grouped_parent_edges[p_smiles] = [edge]
+                    p_noniso, p_added = self.find_or_insert_nonisofrag(session, p_smiles)
+                    parent_nonisomols_encountered.add(p_noniso)
+                    if p_added:
+                        # print("Parent added", p_smiles)
+                        inserted_nonisomol_count += 1
+                    if p_smiles not in all_nonisomols_encountered:
+                        all_nonisomols_encountered[p_smiles] = p_noniso
 
-                if  p_noniso.fs != 2:
-                    # print("Edge added for {0} {1}".format(p_noniso.id, c_noniso.id))
-                    e = Edge(label=label, parent=p_noniso, child=c_noniso)
-                    session.add(e)
-                    inserted_edge_count += 1
-                # else:
-                #     print("Edges for {0} {1} already present".format(p_noniso.id, c_noniso.id))
+                # handle the child nonisomol
+                c_smiles = edge.NODES[1].SMILES
+                if c_smiles in all_nonisomols_encountered:
+                    if c_noniso.fs is None or c_noniso.fs == self.frag_id:
+                        nonisomols_needing_further_processing.add(c_noniso)
+                else:
+                    c_noniso, c_added = self.find_or_insert_nonisofrag(session, c_smiles)
+                    all_nonisomols_encountered[c_smiles] = c_noniso
+                    if c_added:
+                        # print("Child added", c_smiles)
+                        nonisomols_needing_further_processing.add(c_noniso)
+                        inserted_nonisomol_count += 1
+                    else:
+                        if c_noniso.fs is None or c_noniso.fs == self.frag_id:
+                            nonisomols_needing_further_processing.add(c_noniso)
+                        # print("Child exists {0}, status is {1}".format(c_smiles, c_noniso.fs))
 
-            for p in parents_encountered:
-                if p.fs != 2:
-                    p.fs = 2
+            # now insert the edges
+            for smiles in grouped_parent_edges:
+                # for each parent
+                p_noniso = all_nonisomols_encountered[smiles]
+                if  p_noniso.fs is None or p_noniso.fs == self.frag_id:
+                    edges = grouped_parent_edges[smiles]
 
-            nonisomol.fs = 2
+                    # there can be multiple edges between a parent and a child so we group them by child
+                    grouped_child_edges = {}
+                    for edge in edges:
+                        c_smiles = edge.NODES[1].SMILES
+                        if c_smiles in grouped_child_edges:
+                            grouped_child_edges[c_smiles].append(edge)
+                        else:
+                            grouped_child_edges[c_smiles] = [edge]
+
+                    for c_smiles in grouped_child_edges:
+                        edges = grouped_child_edges[c_smiles]
+                        c_noniso = all_nonisomols_encountered[c_smiles]
+                        count = 0
+                        for edge in edges:
+                            # it's just possible that another process has recently also handled these edges so to be
+                            # safe we do a delete operation to make sure we don't get duplicates
+                            if count == 0:
+                                existing_edges = session.query(Edge)\
+                                    .filter(Edge.parent_id == p_noniso.id)\
+                                    .filter(Edge.child_id == c_noniso.id)\
+                                    .all()
+                                if len(existing_edges) > 0:
+                                    print("Deleting existing edges for {0} and {1}".format(p_noniso.id, c_noniso.id))
+                                    session.delete(existing_edges)
+                                count += 1
+
+                            # print("Edge added for {0} {1}".format(p_noniso.id, c_noniso.id))
+                            e = Edge(label=edge.get_label(), parent=p_noniso, child=c_noniso)
+                            session.add(e)
+                            inserted_edge_count += 1
+                    #session.commit()
+
+            for p in parent_nonisomols_encountered:
+                if p.fs == self.frag_id:
+                    p.fs = 0
+
             # print("Inserted {0} smiles and {1} edges".format(inserted_nonisomol_count, inserted_edge_count))
-            # print("Cache now has {0} entries. {1} need processing".format(len(cache), len(need_processing)))
+            # print("Cache now has {0} entries. {1} need processing".format(len(self.cache), len(need_processing)))
 
-        return need_processing, inserted_nonisomol_count, inserted_edge_count
+        session.commit()
+        return nonisomols_needing_further_processing, inserted_nonisomol_count, inserted_edge_count
 
     def find_or_insert_nonisofrag(self, session, smiles):
         cache = self.frag_cache
@@ -430,7 +477,14 @@ class MoleculeLoader:
         if smiles in cache:
             # print("Molecule {0} already present as {1}".format(smiles, cache[smiles].id))
             self.cache_found += 1
-            return cache[smiles], False
+            noniso = cache[smiles]
+            if noniso.fs is None:
+                # we can't be certain that the status is accurate so we refresh
+                old_status = noniso.fs
+                session.refresh(noniso)
+                if old_status != noniso.fs:
+                    print("INFO: status for {0} {1} was updated from {2} to {3}".format(noniso.id, smiles, old_status, noniso.fs))
+            return noniso, False
         else:
             # print("Looking to add Molecule {0}".format(smiles))
             inchis, inchik, hac, rac = self.gen_std_info(smiles)
@@ -439,13 +493,16 @@ class MoleculeLoader:
             #     print("Added InChi {}".format(inchis))
             # else:
             #     print("Found existing InChi {}".format(inchis))
-            noniso, added = self.insert_noniso(session, inchi, smiles, inchis, inchik, hac, rac, fs=1)
+            noniso, added = self.insert_noniso(session, inchi, smiles, inchis, inchik, hac, rac, fs=self.frag_id)
             if added:
                 self.cache_miss_not_exists += 1
             #     print("Added noniso {}".format(smiles))
             else:
+                if noniso.fs is None:
+                    noniso.fs = self.frag_id
                 self.cache_miss_exists += 1
-            #     print("Found existing noniso {}".format(smiles))
+                # print("Found existing noniso {0} {1}".format(noniso.id, smiles))
+            session.commit()
             cache[smiles] = noniso
             return noniso, added
 

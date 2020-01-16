@@ -712,3 +712,145 @@ fairmolecules=# \di+
  public | uq_noniso_smiles | index | postgres | nonisomol  | 61 MB      |
 (11 rows)
 
+#################################################
+# loading chemspace local ssd 6x2 processes     #
+#################################################
+
+.standardise_chemspace_bb_compounds_3-0 -s 2 -i ~/data/chemspace/2019-07/chemspace-bb_01.txt.gz
+2020-01-15T16:10:14 INFO # Standardising /home/timbo/data/chemspace/2019-07/chemspace-bb_01.txt.gz...
+Frag ID is 70363121
+2020-01-15T16:23:53 INFO #  ...at compound 50,000
+[16:37:09] Can't kekulize mol.  Unkekulized atoms: 3 5
+
+2020-01-15T16:38:48 INFO #  ...at compound 100,000
+2020-01-15T16:53:59 INFO #  ...at compound 150,000
+[17:02:06] Can't kekulize mol.  Unkekulized atoms: 3 5
+
+2020-01-15T17:09:15 INFO #  ...at compound 200,000
+2020-01-15T17:25:01 INFO #  ...at compound 250,000
+2020-01-15T17:40:56 INFO #  ...at compound 300,000
+2020-01-15T17:55:54 INFO #  ...at compound 350,000
+2020-01-15T18:10:55 INFO #  ...at compound 400,000
+2020-01-15T18:25:55 INFO #  ...at compound 450,000
+2020-01-15T18:41:03 INFO #  ...at compound 500,000
+2020-01-15T18:41:03 INFO # Processed 500000 records
+2020-01-15T18:41:03 INFO # 500,000 vendor molecules
+2020-01-15T18:41:03 INFO # 0 vendor molecule failures
+2020-01-15T18:41:03 INFO # 0 inchi generation failures
+
+real	150m49.172s
+user	89m55.634s
+sys	2m1.362s
+
+.standardise_chemspace_bb_compounds_3-0 -s 2 -i ~/data/chemspace/2019-07/chemspace-bb_02.txt.gz
+2020-01-15T16:10:34 INFO # Standardising /home/timbo/data/chemspace/2019-07/chemspace-bb_02.txt.gz...
+Frag ID is 56064725
+2020-01-15T16:24:12 INFO #  ...at compound 50,000
+2020-01-15T16:39:06 INFO #  ...at compound 100,000
+2020-01-15T16:54:21 INFO #  ...at compound 150,000
+2020-01-15T17:09:39 INFO #  ...at compound 200,000
+2020-01-15T17:25:49 INFO #  ...at compound 250,000
+2020-01-15T17:41:34 INFO #  ...at compound 300,000
+2020-01-15T17:56:39 INFO #  ...at compound 350,000
+2020-01-15T18:11:48 INFO #  ...at compound 400,000
+2020-01-15T18:27:04 INFO #  ...at compound 450,000
+2020-01-15T18:42:00 INFO #  ...at compound 500,000
+2020-01-15T18:42:00 INFO # Processed 500000 records
+2020-01-15T18:42:00 INFO # 500,000 vendor molecules
+2020-01-15T18:42:00 INFO # 0 vendor molecule failures
+2020-01-15T18:42:00 INFO # 0 inchi generation failures
+
+real	151m26.291s
+user	90m37.014s
+sys	1m58.719s
+
+(fairmols) timbo@helium:~/github/im/fragalysis$ time python -m frag.network.scripts.standardise_chemspace_bb_compounds_3-0 -s 2 -i ~/data/chemspace/2019-07/chemspace-bb_03.txt.gz
+2020-01-15T16:10:46 INFO # Standardising /home/timbo/data/chemspace/2019-07/chemspace-bb_03.txt.gz...
+Frag ID is 36817733
+2020-01-15T16:24:38 INFO #  ...at compound 50,000
+2020-01-15T16:39:46 INFO #  ...at compound 100,000
+2020-01-15T16:54:45 INFO #  ...at compound 150,000
+2020-01-15T17:09:58 INFO #  ...at compound 200,000
+2020-01-15T17:26:05 INFO #  ...at compound 250,000
+2020-01-15T17:41:45 INFO #  ...at compound 300,000
+2020-01-15T17:56:51 INFO #  ...at compound 350,000
+2020-01-15T18:11:57 INFO #  ...at compound 400,000
+2020-01-15T18:27:09 INFO #  ...at compound 450,000
+2020-01-15T18:41:52 INFO #  ...at compound 500,000
+2020-01-15T18:41:52 INFO # Processed 500000 records
+2020-01-15T18:41:52 INFO # 500,000 vendor molecules
+2020-01-15T18:41:52 INFO # 0 vendor molecule failures
+2020-01-15T18:41:52 INFO # 0 inchi generation failures
+
+real	151m6.298s
+user	90m15.500s
+sys	2m1.472s
+
+.standardise_chemspace_bb_compounds_3-0 -s 2 -i ~/data/chemspace/2019-07/chemspace-bb_04.txt.gz
+2020-01-15T16:10:59 INFO # Standardising /home/timbo/data/chemspace/2019-07/chemspace-bb_04.txt.gz...
+Frag ID is 56500738
+2020-01-15T16:24:48 INFO #  ...at compound 50,000
+2020-01-15T16:39:52 INFO #  ...at compound 100,000
+2020-01-15T16:55:06 INFO #  ...at compound 150,000
+2020-01-15T17:10:23 INFO #  ...at compound 200,000
+2020-01-15T17:26:26 INFO #  ...at compound 250,000
+[17:38:52] Can't kekulize mol.  Unkekulized atoms: 3 5
+
+2020-01-15T17:41:58 INFO #  ...at compound 300,000
+2020-01-15T17:56:39 INFO #  ...at compound 350,000
+2020-01-15T18:11:32 INFO #  ...at compound 400,000
+2020-01-15T18:26:23 INFO #  ...at compound 450,000
+2020-01-15T18:41:09 INFO #  ...at compound 500,000
+2020-01-15T18:41:10 INFO # Processed 500000 records
+2020-01-15T18:41:10 INFO # 500,000 vendor molecules
+2020-01-15T18:41:10 INFO # 0 vendor molecule failures
+2020-01-15T18:41:10 INFO # 0 inchi generation failures
+
+real	150m10.930s
+user	89m28.105s
+sys	2m0.795s
+
+020-01-15T16:11:13 INFO # Standardising /home/timbo/data/chemspace/2019-07/chemspace-bb_05.txt.gz...
+Frag ID is 27498775
+2020-01-15T16:24:54 INFO #  ...at compound 50,000
+2020-01-15T16:39:41 INFO #  ...at compound 100,000
+2020-01-15T16:54:39 INFO #  ...at compound 150,000
+2020-01-15T17:09:44 INFO #  ...at compound 200,000
+2020-01-15T17:25:36 INFO #  ...at compound 250,000
+[17:39:30] Explicit valence for atom # 1 S, 7, is greater than permitted
+Got nothing from MolFromSmiles(C[S@@H](=N)(=O)C=1C=CC=CC1). Skipping this Vendor compound
+2020-01-15T17:41:10 INFO #  ...at compound 300,000
+2020-01-15T17:55:58 INFO #  ...at compound 350,000
+2020-01-15T18:10:58 INFO #  ...at compound 400,000
+2020-01-15T18:25:49 INFO #  ...at compound 450,000
+2020-01-15T18:40:49 INFO #  ...at compound 500,000
+2020-01-15T18:40:49 INFO # Processed 499999 records
+2020-01-15T18:40:49 INFO # 499,999 vendor molecules
+2020-01-15T18:40:49 INFO # 1 vendor molecule failures
+2020-01-15T18:40:49 INFO # 0 inchi generation failures
+
+real	149m37.185s
+user	88m51.224s
+sys	2m1.358s
+
+(fairmols) timbo@helium:~/github/im/fragalysis$ time python -m frag.network.scripts.standardise_chemspace_bb_compounds_3-0 -s 2 -i ~/data/chemspace/2019-07/chemspace-bb_06.txt.gz
+2020-01-15T16:11:23 INFO # Standardising /home/timbo/data/chemspace/2019-07/chemspace-bb_06.txt.gz...
+Frag ID is 50841879
+2020-01-15T16:25:06 INFO #  ...at compound 50,000
+ 2020-01-15T16:39:55 INFO #  ...at compound 100,000
+2020-01-15T16:54:54 INFO #  ...at compound 150,000
+2020-01-15T17:09:59 INFO #  ...at compound 200,000
+2020-01-15T17:25:56 INFO #  ...at compound 250,000
+2020-01-15T17:41:23 INFO #  ...at compound 300,000
+2020-01-15T17:56:13 INFO #  ...at compound 350,000
+2020-01-15T18:11:07 INFO #  ...at compound 400,000
+2020-01-15T18:26:09 INFO #  ...at compound 450,000
+2020-01-15T18:41:09 INFO #  ...at compound 500,000
+2020-01-15T18:41:09 INFO # Processed 500000 records
+2020-01-15T18:41:09 INFO # 500,000 vendor molecules
+2020-01-15T18:41:09 INFO # 0 vendor molecule failures
+2020-01-15T18:41:09 INFO # 0 inchi generation failures
+
+real	149m46.551s
+user	89m10.264s
+sys	2m0.239s

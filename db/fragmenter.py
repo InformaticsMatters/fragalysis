@@ -1,42 +1,70 @@
-import argparse
+import argparse, time
 from db.fairmolecules import MoleculeLoader
 
 from frag.network.models import NodeHolder, Attr
 from frag.utils.network_utils import build_network
 
+from rdkit import RDLogger
+
+# Suppress basic RDKit logging...
+RDLogger.logger().setLevel(RDLogger.ERROR)
+
 loader = MoleculeLoader()
 
 def run_many(limit, source_id, hac_max):
+
+    reporting_interval = 500
 
     session = loader.create_session()
     mols = read_mols(session, limit, hac_max, source_id)
     session.commit()
     inserted_nonisomol_total = 0
     inserted_edge_total = 0
+    reprocess_total = 0
     print("Read {0} mols".format(len(mols)))
+    t0 = time.time()
+    t1 = t0
     count = 0
     for mol in mols:
         count += 1
         # print("Handling SMILES {0} {1}".format(count, mol.smiles))
-        inserted_nonisomol_count, inserted_edge_count = fragment_and_load_mol(session, mol, count)
+        inserted_nonisomol_count, inserted_edge_count, reprocess_count = fragment_and_load_mol(session, mol, count)
         inserted_nonisomol_total += inserted_nonisomol_count
         inserted_edge_total += inserted_edge_count
-        session.commit()
+        reprocess_total += reprocess_count
+
+        if count % reporting_interval == 0:
+            t2 = time.time()
+            dur = int(t2 - t1)
+            t1 = t2
+            cache_size, cache_found, cache_miss_not_exists, cache_miss_exists = loader.get_cache_stats()
+            print("{0} molecules processed in {1}s. Cache now has {2} entries, {3} hits, {4} not in db, {5} in db"\
+                  .format(count, dur, cache_size, cache_found, cache_miss_not_exists, cache_miss_exists))
+
+    if count % reporting_interval != 0:
+        t2 = time.time()
+        dur = int(t2 - t1)
+        t1 = t2
         cache_size, cache_found, cache_miss_not_exists, cache_miss_exists = loader.get_cache_stats()
-        print("Cache now has {0} entries, {1} hits, {2} not in db, {3} in db".format(cache_size, cache_found, cache_miss_not_exists, cache_miss_exists))
-    print("Total counts: smiles={0} edges={1}".format(inserted_nonisomol_total, inserted_edge_total))
+        print("{0} mols in {1}s. Cache has {2} entries, {3} hits, {4} not in db, {5} in db" \
+              .format(count, dur, cache_size, cache_found, cache_miss_not_exists, cache_miss_exists))
+
+    print("Total counts: smiles={0} edges={1} reprocess={2}".format(inserted_nonisomol_total, inserted_edge_total, reprocess_total))
 
 def fragment_and_load_mol(session, mol, count):
+
     node_holder = fragment_mol(mol)
     size = node_holder.size()
-    print("Handling mol {0} {1} with {2} nodes and {3} edges".format(count, mol.smiles, size[0], size[1]))
-    added_child_nonisos, inserted_nonisomol_count, inserted_edge_count = loader.insert_frags(session, mol, node_holder)
+    # print("Handling mol {0} {1} with {2} nodes and {3} edges".format(count, mol.smiles, size[0], size[1]))
+    added_child_nonisos, inserted_nonisomol_count, inserted_edge_count = loader.insert_frags(session, node_holder)
+    reprocess_count = len(added_child_nonisos)
     for child in added_child_nonisos:
         # print("Recursing for ", child.smiles)
-        n, e = fragment_and_load_mol(session, child, count)
+        n, e, r = fragment_and_load_mol(session, child, count)
         inserted_nonisomol_count += n
         inserted_nonisomol_count += e
-    return inserted_nonisomol_count, inserted_edge_count
+        reprocess_count += r
+    return inserted_nonisomol_count, inserted_edge_count, reprocess_count
 
 def run_single(smiles):
 
