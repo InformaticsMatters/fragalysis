@@ -1039,3 +1039,11 @@ iis_smiles-007-500-000--007-999-999.txt.gz
 real    62m21.376s
 user    30m9.370s
 sys     0m48.130s
+
+# fragment building
+There frag processes crashed due to error with deleting edges:
+72938601
+58598652
+35207737
+50097386
+

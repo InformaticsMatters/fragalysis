@@ -33,6 +33,9 @@ class NonIsomol(Base):
     rac = Column(SmallInteger())
     fc = Column(SmallInteger())
     fs = Column(Integer(), index=True)
+    fcc1 = Column(Integer())
+    fcc2 = Column(Integer())
+    ftime = Column(Integer())
     inchi_id = Column(Integer, ForeignKey('inchi.id'), nullable=False)
     inchi = relationship(Inchi)
     Index('uq_noniso_smiles', smiles, postgresql_using='hash')
@@ -368,7 +371,7 @@ class MoleculeLoader:
         session.commit()
         return mol
 
-    def insert_frags(self, session, node_holder):
+    def insert_frags(self, session, node_holder, fragmentation_time):
 
         nonisomols_needing_further_processing = set()
         inserted_nonisomol_count = 0
@@ -381,17 +384,22 @@ class MoleculeLoader:
             if nonisomol.fs == self.frag_id:
                 # print("Marking as complete", nonisomol.smiles)
                 nonisomol.fs = 0
+                nonisomol.fcc1 = 0
+                nonisomol.fcc2 = 0
+                nonisomol.ftime = 0
         else:
             # so we need to process the edges
-            # print("Handling", nonisomol.smiles)
 
             # group the edges by parent and prepare the nonisomols
             grouped_parent_edges = collections.OrderedDict()
             all_nonisomols_encountered = {}
             parent_nonisomols_encountered = set()
+            r_smiles = None
             for edge in node_holder.get_edges():
                 # handle the parent nonisomol
                 p_smiles = edge.NODES[0].SMILES
+                if not r_smiles:
+                    r_smiles = p_smiles
                 if p_smiles in grouped_parent_edges:
                     grouped_parent_edges[p_smiles].append(edge)
                 else:
@@ -423,11 +431,15 @@ class MoleculeLoader:
                         # print("Child exists {0}, status is {1}".format(c_smiles, c_noniso.fs))
 
             # now insert the edges
+            count = 0
+            fcc1 = len(grouped_parent_edges)
             for smiles in grouped_parent_edges:
+                count += 1
                 # for each parent
                 p_noniso = all_nonisomols_encountered[smiles]
                 if  p_noniso.fs is None or p_noniso.fs == self.frag_id:
                     edges = grouped_parent_edges[smiles]
+                    p_noniso.ftime = fragmentation_time
 
                     # there can be multiple edges between a parent and a child so we group them by child
                     grouped_child_edges = {}
@@ -438,10 +450,15 @@ class MoleculeLoader:
                         else:
                             grouped_child_edges[c_smiles] = [edge]
 
+                    fcc2 = len(grouped_child_edges)
+                    p_noniso.fcc1 = fcc1
+                    p_noniso.fcc2 = fcc2
+
                     for c_smiles in grouped_child_edges:
                         edges = grouped_child_edges[c_smiles]
                         c_noniso = all_nonisomols_encountered[c_smiles]
                         count = 0
+
                         for edge in edges:
                             # it's just possible that another process has recently also handled these edges so to be
                             # safe we do a delete operation to make sure we don't get duplicates
@@ -459,6 +476,9 @@ class MoleculeLoader:
                             session.add(e)
                             inserted_edge_count += 1
                     #session.commit()
+
+            # if count > 1:
+            #     print("Encountered {0} parents for {1}".format(count, r_smiles))
 
             for p in parent_nonisomols_encountered:
                 if p.fs == self.frag_id:
@@ -507,6 +527,11 @@ class MoleculeLoader:
 
     def get_cache_stats(self):
         return len(self.frag_cache), self.cache_found, self.cache_miss_not_exists, self.cache_miss_exists
+
+    def dump_cache(self, filename):
+        with open(filename, 'wt') as output_file:
+            for smiles, nonisomol in self.frag_cache.items():
+                output_file.write("{0}\t{1}\n".format(nonisomol.id, nonisomol.smiles))
 
 
 def main():

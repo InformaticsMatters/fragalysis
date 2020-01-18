@@ -11,7 +11,7 @@ RDLogger.logger().setLevel(RDLogger.ERROR)
 
 loader = MoleculeLoader()
 
-def run_many(limit, source_id, hac_max):
+def run_many(limit, source_id, hac_max, dump_cache):
 
     reporting_interval = 500
 
@@ -51,12 +51,21 @@ def run_many(limit, source_id, hac_max):
 
     print("Total counts: smiles={0} edges={1} reprocess={2}".format(inserted_nonisomol_total, inserted_edge_total, reprocess_total))
 
+    if dump_cache:
+        filename = "/tmp/fragmenter-{}.txt".format(loader.frag_id)
+        print("Writing cache to {}".format(filename))
+        loader.dump_cache(filename)
+        print("Finished writing cache")
+
+
 def fragment_and_load_mol(session, mol, count):
 
+    t0 = int(round(time.time() * 1000))
     node_holder = fragment_mol(mol)
+    t1 = int(round(time.time() * 1000))
     size = node_holder.size()
     # print("Handling mol {0} {1} with {2} nodes and {3} edges".format(count, mol.smiles, size[0], size[1]))
-    added_child_nonisos, inserted_nonisomol_count, inserted_edge_count = loader.insert_frags(session, node_holder)
+    added_child_nonisos, inserted_nonisomol_count, inserted_edge_count = loader.insert_frags(session, node_holder, t1 - t0)
     reprocess_count = len(added_child_nonisos)
     for child in added_child_nonisos:
         # print("Recursing for ", child.smiles)
@@ -117,6 +126,7 @@ if __name__ == '__main__':
     parser.add_argument('--hac-max', type=int, default=36, help='Max HAC to be processed.')
     parser.add_argument('--source-id', '-i', type=int, help='Source ID to be processed.')
     parser.add_argument('--smiles', '-s', help='SMILES to process (testing only)')
+    parser.add_argument('--dump-cache', '-d', action='store_true', help='Dump cache details at end of run')
 
     args = parser.parse_args()
 
@@ -124,4 +134,4 @@ if __name__ == '__main__':
     if args.smiles:
         run_single(args.smiles)
     else:
-        run_many(args.limit, args.source_id, args.hac_max)
+        run_many(args.limit, args.source_id, args.hac_max, args.dump_cache)
