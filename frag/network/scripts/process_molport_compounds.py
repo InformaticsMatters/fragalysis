@@ -316,7 +316,14 @@ def extract_vendor_compounds(suppliermol_gzip_file,
             iso = fields[iso_smiles_col]
             noniso = fields[noniso_smiles_col]
             compound_id = fields[compound_col]
-            blt = int(fields[blt_col].rstrip())
+            # Best Lead Time may not be a number, it may be the string 'null'.
+            # Render it as a string value or an empty value if it's 'null'.
+            # It's the last value on the line so remember to 'rstrip()'
+            blt_field = fields[blt_col].rstrip()
+            try:
+                blt_val = str(int(blt_field))
+            except:
+                blt_val = ''
 
             # If min/max HAC have been provided
             # use them to eliminate compounds.
@@ -383,7 +390,7 @@ def extract_vendor_compounds(suppliermol_gzip_file,
                                      quantity,
                                      cost_min,
                                      cost_max,
-                                     blt,
+                                     blt_val,
                                      supplier_id))
 
             # Enough?
