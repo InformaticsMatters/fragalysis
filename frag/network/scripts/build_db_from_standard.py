@@ -95,14 +95,14 @@ def write_data(node_holder):
     return need_further_processing
 
 
-def fragment_and_write(smiles):
-    node_holder = fragment_mol(smiles)
+def fragment_and_write(smiles, base_dir, verbosity):
+    node_holder = fragment_mol(smiles, base_dir, verbosity)
     need_further_processing = write_data(node_holder)
     for smiles in need_further_processing:
-        fragment_and_write(smiles)
+        fragment_and_write(smiles, base_dir, verbosity)
 
 
-def fragment_mol(smiles, verbosity=0):
+def fragment_mol(smiles, base_dir, verbosity):
     attrs = []
     attr = Attr(smiles, ["EM"])
     attrs.append(attr)
@@ -110,7 +110,7 @@ def fragment_mol(smiles, verbosity=0):
     # Build the network
     node_holder = NodeHolder(iso_flag=False)
     max_frags = 0
-    node_holder = build_network(attrs, node_holder, max_frags, None,
+    node_holder = build_network(attrs, node_holder, max_frags, base_dir,
                                 verbosity=verbosity, recurse=False)
     return node_holder
 
@@ -197,7 +197,7 @@ def main():
             if std.hac < args.min_hac or args.max_hac > 0 and std.hac > args.max_hac:
                 continue
 
-            fragment_and_write(std.noniso)
+            fragment_and_write(std.noniso, args.base_dir, args.verbosity)
 
             # Enough?
             num_processed += 1
