@@ -1047,3 +1047,138 @@ There frag processes crashed due to error with deleting edges:
 35207737
 50097386
 
+###################################
+# alternative frag building modes #
+###################################
+
+10,000 chemspace 2019-07 mols
+-----------------------------
+
+chunk size 1000, NodeHolder as cache
+Command: rm -rf ~/tmp/chemspace/10000x1000 && mkdir ~/tmp/chemspace/10000x1000 && time python -m frag.network.scripts.build_db_from_standard_0 --input /home/timbo/tmp/chemspace/standardised-compounds-10000.tab --base_dir ~/tmp/chemspace/10000x20 --non_isomeric --chunk-size 1000
+Time: 10m22
+Nodes: 105547 ->  77765 (1.4)
+Edges: 310320 -> 246830 (1.3)
+Memory: ~2.0%
+
+chunk size 20, NodeHolder as cache
+Command: rm -rf ~/tmp/chemspace/10000x20 && mkdir ~/tmp/chemspace/10000x20 && time python -m frag.network.scripts.build_db_from_standard_0 --input /home/timbo/tmp/chemspace/standardised-compounds-10000.tab --base_dir ~/tmp/chemspace/10000x20 --non_isomeric --chunk-size 20
+Time: 11m46
+Nodes: 145995 ->  77765 (1.9)
+Edges: 368743 -> 246830 (1.5)
+Memory: ~0.5%
+
+smiles as cache
+Command: rm -rf ~/tmp/chemspace/10000x0 && mkdir ~/tmp/chemspace/10000x0 && time python -m frag.network.scripts.build_db_from_standard_1 --input /home/timbo/tmp/chemspace/standardised-compounds-10000.tab --base_dir ~/tmp/chemspace/10000x0 --non_isomeric
+Time: 12m41
+Nodes:  77765 ->  77765 (1.0)
+Edges: 246830 -> 246830 (1.0)
+Memory: ~0.5%
+
+100,000 chemspace 2019-07 mols
+------------------------------
+
+chunk size 1000, NodeHolder as cache
+Command: rm -rf ~/tmp/chemspace/100000x1000 && mkdir ~/tmp/chemspace/100000x1000 && time python -m frag.network.scripts.build_db_from_standard_0 --input /home/timbo/tmp/chemspace/standardised-compounds-100000.tab --base_dir ~/tmp/chemspace/100000x1000 --non_isomeric --chunk-size 1000
+Time: 79m48
+Nodes:  748309 ->  374469 (2.0)
+Edges: 2317780 -> 1330422 (1.7)
+Memory: ~1.9%
+
+chunk size 20, NodeHolder as cache
+Command: rm -rf ~/tmp/chemspace/100000x20 && mkdir ~/tmp/chemspace/100000x20 && time python -m frag.network.scripts.build_db_from_standard_0 --input /home/timbo/tmp/chemspace/standardised-compounds-100000.tab --base_dir ~/tmp/chemspace/100000x20 --non_isomeric --chunk-size 20
+Time: 99m18
+Nodes: 1118746 ->  374469 (3.0)
+Edges: 3007776 -> 1330422 (2.3)
+Memory: ~0.7%
+
+smiles as cache
+Command: rm -rf ~/tmp/chemspace/100000x0 && mkdir ~/tmp/chemspace/100000x0 && time python -m frag.network.scripts.build_db_from_standard_1 --input /home/timbo/tmp/chemspace/standardised-compounds-100000.tab --base_dir ~/tmp/chemspace/100000x0 --non_isomeric
+Time: 97m34
+Nodes:  374469 ->  374469 (1.0)
+Edges: 1330422 -> 1330422 (1.0)
+Memory: ~0.8%
+
+500,000 chemspace 2019-07 mols
+------------------------------
+
+chunk size 20, NodeHolder as cache
+Command: rm -rf ~/tmp/chemspace/500000x20 && mkdir ~/tmp/chemspace/500000x20 && time python -m frag.network.scripts.build_db_from_standard_0 --input /home/timbo/tmp/chemspace/standardised-compounds-500000.tab --base_dir ~/tmp/chemspace/500000x20 --non_isomeric --chunk-size 20
+Time: 549m32
+Nodes:  5786867 -> 1511021 (3.8)
+Edges: 16738700 -> 5858186 (2.9)
+Memory: ~1.6%
+
+smiles as cache
+Command: rm -rf ~/tmp/chemspace/500000x0 && mkdir ~/tmp/chemspace/500000x0 && time python -m frag.network.scripts.build_db_from_standard_1 --input /home/timbo/tmp/chemspace/standardised-compounds-500000.tab --base_dir ~/tmp/chemspace/500000x0 --non_isomeric
+Time: 559m26
+Nodes: 1511021 -> 1511021 (1.0)
+Edges: 5858186 -> 5858186 (1.0)
+Memory: ~2.3% but ~1.6% for most of the time
+
+##############################################
+# Bulk import of chemspace nodes and edges
+##############################################
+
+Data: Jul2019_CS_BB_MOD_selected_set_SMILES.txt.gz comprising 5535473 molecules.
+Standardized into 500,000 chunks.
+Each chunk fragmented giving 18,355,914 nodes and 70,447,672 edges.
+De-duplicated giving 10,129,380 nodes and 40,540,523 edges. Nodes took 1m29, edges took 10m16.
+
+Nodes loaded into postgres:
+
+fairmolecules=# \copy i_node(smiles, hac, rac, scaff, x, labels) from '/home/timbo/tmp/chemspace/2019-07/standardised/nodes-unique.csv' DELIMITER ',' CSV;
+/home/timbo/tmp/chemspace/2019-07/standardised/nodes-unique.csv: No such file or directory
+fairmolecules=# \copy i_node(smiles, hac, rac, scaff, x, labels) from '/home/timbo/data/chemspace/2019-07/standardised/nodes-unique.csv' DELIMITER ',' CSV;
+COPY 10129380
+Time: 24234.930 ms (00:24.235)
+fairmolecules=# UPDATE i_node i SET present = TRUE WHERE EXISTS
+fairmolecules-#   (SELECT 1 FROM nonisomol n WHERE n.smiles = i.smiles);
+UPDATE 5337753
+Time: 84870.829 ms (01:24.871)
+fairmolecules=# SELECT present, count(*) FROM i_node GROUP BY present;
+ present |  count
+---------+---------
+ t       | 5337753
+         | 4791627
+(2 rows)
+
+Time: 3334.992 ms (00:03.335)
+fairmolecules=# INSERT INTO nonisomol (smiles, hac, rac)
+fairmolecules-#   SELECT smiles, hac, rac FROM i_node
+fairmolecules-#   WHERE present IS NULL;
+INSERT 0 4791627
+Time: 116139.448 ms (01:56.139)
+
+Edges loaded into postgres:
+(note this was messed up first time and needed re-running so stats may not be 100% representative)
+
+fairmolecules=# UPDATE i_edge i SET present = TRUE WHERE EXISTS
+fairmolecules-#   (SELECT 1 FROM edge e
+fairmolecules(#   JOIN nonisomol np ON np.id = e.parent_id
+fairmolecules(#   JOIN nonisomol nc ON nc.id = e.child_id
+fairmolecules(#   WHERE i.p_smiles = np.smiles AND i.c_smiles = nc.smiles);
+
+UPDATE 12422
+Time: 215115.203 ms (03:35.115)
+fairmolecules=# SELECT present, count(*) FROM i_edge GROUP BY present;
+ present |  count
+---------+----------
+ t       |    12422
+         | 40528101
+(2 rows)
+
+Time: 66007.980 ms (01:06.008)
+fairmolecules=# INSERT INTO edge (parent_id, child_id, label)
+fairmolecules-# SELECT np.id, nc.id, i.data FROM i_edge i
+fairmolecules-#   JOIN nonisomol np ON np.smiles = i.p_smiles
+fairmolecules-#   JOIN nonisomol nc ON nc.smiles = i.c_smiles
+fairmolecules-#   WHERE i.present IS NULL;
+INSERT 0 40528101
+Time: 1519226.145 ms (25:19.226)
+
+fairmolecules=# select count(*) from edge;
+  count
+----------
+ 40542522
+(1 row)

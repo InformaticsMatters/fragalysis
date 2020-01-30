@@ -45,9 +45,9 @@ def run_many(limit, source_id, hac_max, dump_cache):
         t2 = time.time()
         dur = int(t2 - t1)
         t1 = t2
-        cache_size, cache_found, cache_miss_not_exists, cache_miss_exists = loader.get_cache_stats()
-        print("{0} mols in {1}s. Cache has {2} entries, {3} hits, {4} not in db, {5} in db" \
-              .format(count, dur, cache_size, cache_found, cache_miss_not_exists, cache_miss_exists))
+        cache_size, cache_found, cache_miss_not_exists, cache_miss_exists, parents_processed, parents_skipped = loader.get_cache_stats()
+        print("{0} mols in {1}s. Cache has {2} entries, {3} hits, {4} not in db, {5} in db, pp {6} ps {7}" \
+              .format(count, dur, cache_size, cache_found, cache_miss_not_exists, cache_miss_exists, parents_processed, parents_skipped))
 
     print("Total counts: smiles={0} edges={1} reprocess={2}".format(inserted_nonisomol_total, inserted_edge_total, reprocess_total))
 

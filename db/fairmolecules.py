@@ -16,7 +16,6 @@ class Inchi(Base):
     __tablename__ = 'inchi'
     id = Column(Integer, primary_key=True)
 
-    # inchik = Column(Text(), nullable=False, index=True)
     inchik = Column(Text(), nullable=False)
     inchis = Column(Text(), nullable=False)
     Index('ix_inchik', inchik, postgresql_using='hash')
@@ -26,7 +25,7 @@ class NonIsomol(Base):
     id = Column(Integer, primary_key=True)
 
     # smiles = Column(Text(), nullable=False, unique=True)
-    smiles = Column(Text(), nullable=False)
+    smiles = Column(Text(), nullable=False, unique=True)
     inchik = Column(Text())
     inchis = Column(Text())
     hac = Column(SmallInteger())
@@ -36,21 +35,19 @@ class NonIsomol(Base):
     fcc1 = Column(Integer())
     fcc2 = Column(Integer())
     ftime = Column(Integer())
-    inchi_id = Column(Integer, ForeignKey('inchi.id'), nullable=False)
+    inchi_id = Column(Integer, ForeignKey('inchi.id'))
     inchi = relationship(Inchi)
-    Index('uq_noniso_smiles', smiles, postgresql_using='hash')
+
 
 class Isomol(Base):
     __tablename__ = 'isomol'
     id = Column(Integer, primary_key=True)
 
-    # smiles = Column(Text(), nullable=False, unique=True)
-    smiles = Column(Text(), nullable=False)
+    smiles = Column(Text(), nullable=False, unique=True)
     inchik = Column(Text())
     inchis = Column(Text())
     nonisomol_id = Column(Integer, ForeignKey('nonisomol.id'), nullable=False)
     nonisomol = relationship(NonIsomol)
-    Index('uq_iso_smiles', smiles, postgresql_using='hash')
 
 class Source(Base):
     __tablename__ = 'source'
@@ -159,6 +156,8 @@ class MoleculeLoader:
         self.cache_miss_exists = 0
         self.cache_miss_not_exists = 0
         self.already_fragmented = 0
+        self.parents_processed = 0
+        self.parents_skipped = 0
 
         print("Frag ID is", self.frag_id)
 
@@ -438,6 +437,7 @@ class MoleculeLoader:
                 # for each parent
                 p_noniso = all_nonisomols_encountered[smiles]
                 if  p_noniso.fs is None or p_noniso.fs == self.frag_id:
+                    self.parents_processed += 1
                     edges = grouped_parent_edges[smiles]
                     p_noniso.ftime = fragmentation_time
 
@@ -476,6 +476,8 @@ class MoleculeLoader:
                             session.add(e)
                             inserted_edge_count += 1
                     #session.commit()
+                else:
+                    self.parents_skipped += 1
 
             # if count > 1:
             #     print("Encountered {0} parents for {1}".format(count, r_smiles))
@@ -526,7 +528,7 @@ class MoleculeLoader:
             return noniso, added
 
     def get_cache_stats(self):
-        return len(self.frag_cache), self.cache_found, self.cache_miss_not_exists, self.cache_miss_exists
+        return len(self.frag_cache), self.cache_found, self.cache_miss_not_exists, self.cache_miss_exists, self.parents_processed, self.parents_skipped
 
     def dump_cache(self, filename):
         with open(filename, 'wt') as output_file:

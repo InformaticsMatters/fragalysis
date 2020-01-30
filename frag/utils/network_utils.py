@@ -534,8 +534,7 @@ def write_data_as_csv(output_dir, node_holder):
     out_f.close()
 
 
-def build_network(attrs, node_holder,
-                  max_frags=0, base_dir='.', verbosity=0, recurse=True):
+def build_network(attrs, node_holder, max_frags=0, base_dir='.', verbosity=0, recurse=True):
 
     log_file = None
     if ENABLE_BUILD_NETWORK_LOG:
