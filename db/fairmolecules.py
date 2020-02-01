@@ -46,7 +46,7 @@ class Isomol(Base):
     smiles = Column(Text(), nullable=False, unique=True)
     inchik = Column(Text())
     inchis = Column(Text())
-    nonisomol_id = Column(Integer, ForeignKey('nonisomol.id'), nullable=False)
+    nonisomol_id = Column(Integer, ForeignKey('nonisomol.id'), nullable=False, index=True)
     nonisomol = relationship(NonIsomol)
 
 class Source(Base):
@@ -90,10 +90,10 @@ class MolSource(Base):
 
     smiles = Column(Text(), nullable=False)
     code = Column(Text(), nullable=False)
-    source_id = Column(Integer, ForeignKey(Source.id, ondelete='CASCADE'), nullable=False)
+    source_id = Column(Integer, ForeignKey(Source.id, ondelete='CASCADE'), nullable=False, index=True)
     input_id = Column(Integer, ForeignKey(MolInput.id, ondelete='CASCADE'), nullable=False)
-    nonisomol_id = Column(Integer, ForeignKey('nonisomol.id'))
-    isomol_id = Column(Integer, ForeignKey('isomol.id'))
+    nonisomol_id = Column(Integer, ForeignKey('nonisomol.id'), index=True)
+    isomol_id = Column(Integer, ForeignKey('isomol.id'), index=True)
     source = relationship(Source)
     input = relationship(MolInput)
     nonisomol = relationship(NonIsomol)

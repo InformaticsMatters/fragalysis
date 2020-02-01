@@ -1,0 +1,76 @@
+### chemspace Dec 2019 processing
+
+
+conda activate fairmols
+
+cd /data/chemspace/2019-12
+gzip *.txt
+
+for d in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34
+do
+mkdir $d
+mv chemspace-bb_${d}.txt.gz $d/
+done
+
+
+cd ~/github/im/fragalysis
+
+for d in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16
+do
+screen -dm time python -m frag.network.scripts.standardise_chemspace_bb_pricing_compounds /data/chemspace/2019-12/${d} chemspace-bb /data/chemspace/2019-12/${d}/standardised
+done
+
+for d in 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34
+do
+screen -dm time python -m frag.network.scripts.standardise_chemspace_bb_pricing_compounds /data/chemspace/2019-12/${d} chemspace-bb /data/chemspace/2019-12/${d}/standardised
+done
+
+gunzip /data/chemspace/2019-12/??/standardised/standardised-compounds.tab.gz
+
+### load standardised mols
+
+DROP TABLE i_mols;
+CREATE TABLE i_mols (
+  osmiles TEXT,
+  isosmiles TEXT,
+  nonisosmiles TEXT,
+  hac SMALLINT,
+  cmpd_id TEXT,
+  price INTEGER,
+  isomol_id INTEGER,
+  nonisomol_id INTEGER
+);
+
+\COPY i_mols(osmiles, isosmiles, nonisosmiles, hac, cmpd_id, price) FROM '/data/chemspace/2019-12/00/standardised/standardised-compounds.tab' CSV DELIMITER E'\t' HEADER;
+
+# repeat - loaded 10 batches giving 5M records
+
+INSERT INTO nonisomol (smiles, hac)
+  SELECT nonisosmiles, hac from i_mols
+  ON CONFLICT ON CONSTRAINT nonisomol_smiles_key DO NOTHING;
+
+UPDATE i_mols i SET nonisomol_id = n.id
+  FROM nonisomol n
+    WHERE n.smiles = i.nonisosmiles;
+
+SELECT count(*) FROM i_mols where nonisomol_id is not null;
+
+INSERT INTO isomol (smiles, nonisomol_id)
+  SELECT isosmiles, nonisomol_id from i_mols
+  WHERE isosmiles != nonisosmiles
+  ON CONFLICT ON CONSTRAINT isomol_smiles_key DO NOTHING;
+
+UPDATE i_mols i SET isomol_id = n.id
+  FROM isomol n
+    WHERE n.smiles = i.isosmiles
+    AND i.isosmiles != i.nonisosmiles;
+
+INSERT INTO mol_input (name, started_date, source_id)
+ VALUES ('chemspace-bb_00-09', now(), 3);
+
+# LOOKUP the ID generated - it may not be 2
+
+INSERT INTO mol_source (smiles, code, source_id, input_id, nonisomol_id, isomol_id)
+  (SELECT osmiles, cmpd_id, 3, 2, nonisomol_id, isomol_id FROM i_mols);
+
+### TODO handle the price info

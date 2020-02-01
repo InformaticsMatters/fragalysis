@@ -1,0 +1,111 @@
+### DSIP loading
+
+conda activate fairmols
+cd github/im/fragalysis/
+
+
+# standardisation
+python -m frag.network.scripts.standardise_xchem_compounds /data/xchem dsip /data/xchem/standardised
+
+gunzip /data/xchem/standardised/standardised-compounds.tab.gz
+
+# load standardised data
+DROP TABLE i_mols;
+CREATE TABLE i_mols (
+  osmiles TEXT,
+  isosmiles TEXT,
+  nonisosmiles TEXT,
+  hac SMALLINT,
+  cmpd_id TEXT,
+  price INTEGER,
+  isomol_id INTEGER,
+  nonisomol_id INTEGER
+);
+
+\COPY i_mols(osmiles, isosmiles, nonisosmiles, hac, cmpd_id) FROM '/data/xchem/standardised/standardised-compounds.tab' CSV DELIMITER E'\t' HEADER;
+
+INSERT INTO nonisomol (smiles, hac)
+  SELECT nonisosmiles, hac from i_mols
+  ON CONFLICT ON CONSTRAINT nonisomol_smiles_key DO NOTHING;
+
+UPDATE i_mols i SET nonisomol_id = n.id
+  FROM nonisomol n
+    WHERE n.smiles = i.nonisosmiles;
+
+INSERT INTO isomol (smiles, nonisomol_id)
+  SELECT isosmiles, nonisomol_id from i_mols
+  WHERE isosmiles != nonisosmiles
+  ON CONFLICT ON CONSTRAINT isomol_smiles_key DO NOTHING;
+
+UPDATE i_mols i SET isomol_id = n.id
+  FROM isomol n
+    WHERE n.smiles = i.isosmiles
+    AND i.isosmiles != i.nonisosmiles;
+
+INSERT INTO mol_input (name, started_date, source_id)
+ VALUES ('dsip', now(), 6);
+
+# LOOKUP the ID generated - it may not be 1
+
+INSERT INTO mol_source (smiles, code, source_id, input_id, nonisomol_id, isomol_id)
+  (SELECT osmiles, cmpd_id, 6, 1, nonisomol_id, isomol_id FROM i_mols);
+
+
+### fragmentation
+# this creates nodes.csv and edges.csv in /data/xchem/standardised/
+time python -m frag.network.scripts.build_db_from_standard_1 --input /data/xchem/standardised/standardised-compounds.tab --base_dir /data/xchem/standardised --non_isomeric
+
+# import the nodes
+
+DROP TABLE i_edge;
+DROP TABLE i_node;
+
+CREATE TABLE i_node (
+  smiles TEXT,
+  present BOOLEAN,
+  hac SMALLINT,
+  rac SMALLINT,
+  scaff TEXT,
+  x TEXT,
+  labels TEXT
+);
+
+CREATE TABLE i_edge (
+  p_smiles TEXT,
+  c_smiles TEXT,
+  present BOOLEAN,
+  data TEXT,
+  labels TEXT
+);
+
+
+\COPY i_node(smiles, hac, rac, scaff, x, labels) FROM '/data/xchem/standardised/nodes.csv' DELIMITER ',' CSV;
+\COPY i_edge(p_smiles, c_smiles, data, labels) FROM '/data/xchem/standardised/edges.csv' DELIMITER ',' CSV;
+
+UPDATE i_node i SET present = TRUE WHERE EXISTS 
+  (SELECT 1 FROM nonisomol n WHERE n.smiles = i.smiles);
+SELECT present, count(*) FROM i_node GROUP BY present;
+
+INSERT INTO nonisomol (smiles, hac, rac)
+  SELECT smiles, hac, rac FROM i_node 
+  WHERE present IS NULL;
+
+UPDATE i_edge i SET present = TRUE WHERE EXISTS
+  (SELECT 1 FROM edge e 
+  JOIN nonisomol np ON np.id = e.parent_id 
+  JOIN nonisomol nc ON nc.id = e.child_id 
+  WHERE i.p_smiles = np.smiles AND i.c_smiles = nc.smiles);
+SELECT present, count(*) FROM i_edge GROUP BY present;
+
+INSERT INTO edge (parent_id, child_id, label)
+  SELECT np.id, nc.id, i.data FROM i_edge i
+    JOIN nonisomol np ON np.smiles = i.p_smiles 
+    JOIN nonisomol nc ON nc.smiles = i.c_smiles
+    WHERE i.present IS NULL;
+
+
+
+
+
+
+
