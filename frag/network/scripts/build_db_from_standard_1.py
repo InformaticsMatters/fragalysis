@@ -43,7 +43,6 @@ def write_data(node_holder):
         node = node_holder.node_list.pop()
         smiles = node.SMILES
         if smiles not in cache:
-            cache.add(smiles)
             write_node(node)
     else:
         # so we need to process the edges
@@ -219,7 +218,7 @@ def main():
 
     nodes_f.close()
     edges_f.close()
-    print("Wrote {0} nodes and {1} edges".format(node_count, edge_count))
+    print("Processed {0} molecules, Wrote {1} nodes and {2} edges".format(num_processed, node_count, edge_count))
 
 
 if __name__ == "__main__":

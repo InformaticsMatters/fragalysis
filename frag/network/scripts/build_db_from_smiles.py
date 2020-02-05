@@ -26,14 +26,14 @@ edges_f = None
 def write_node(node):
     global node_count
     # print("writing node", node.SMILES)
-    nodes_f.write(node.as_csv() + ',,F2\n')
+    nodes_f.write(node.as_csv() + '\n')
     node_count += 1
     cache.add(node.SMILES)
 
 def write_edge(edge):
     global edge_count
     # print("writing edge", edge.get_label())
-    edges_f.write(edge.as_csv() + ',FRAG\n')
+    edges_f.write(edge.as_csv() + '\n')
     edge_count += 1
 
 def write_data(node_holder):
@@ -194,7 +194,7 @@ def main():
 
     nodes_f.close()
     edges_f.close()
-    print("Wrote {0} nodes and {1} edges".format(node_count, edge_count))
+    print("Processed {0} molecules, Wrote {1} nodes and {2} edges".format(num_processed, node_count, edge_count))
 
 
 if __name__ == "__main__":
