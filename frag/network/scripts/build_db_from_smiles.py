@@ -40,10 +40,11 @@ def write_data(node_holder):
     need_further_processing = []
     # if no edges then just set status to complete
     if node_holder.size()[1] == 0:
-        node = node_holder.node_list.pop()
-        smiles = node.SMILES
-        if smiles not in cache:
-            write_node(node)
+        if node_holder.node_list:
+            node = node_holder.node_list.pop()
+            smiles = node.SMILES
+            if smiles not in cache:
+                write_node(node)
     else:
         # so we need to process the edges
 
@@ -92,10 +93,10 @@ def write_data(node_holder):
 
 def fragment_and_write(smiles):
 
-    t0 = int(round(time.time() * 1000))
+    #t0 = int(round(time.time() * 1000))
     node_holder = fragment_mol(smiles)
-    t1 = int(round(time.time() * 1000))
-    size = node_holder.size()
+    #t1 = int(round(time.time() * 1000))
+    #size = node_holder.size()
     # print("Handling mol {0} with {1} nodes and {2} edges".format(smiles, size[0], size[1]))
     need_further_processing = write_data(node_holder)
     reprocess_count = len(need_further_processing)
