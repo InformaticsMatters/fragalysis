@@ -433,7 +433,7 @@ def create_children(input_node, node_holder, max_frag=0, smiles=None, log_file=N
     :param smiles: A SMILES string, for log/diagnostics only.
                    Written to the log if specified
     :param log_file: A file if information is to be logged, otherwise None
-    :return: A tuple, the number of direct children and (atm 0)
+    :return: A tuple, the number of direct children and the number of ring-ring splits
     """
     fragments = get_fragments(input_node.RDMol)
 
@@ -463,7 +463,7 @@ def create_children(input_node, node_holder, max_frag=0, smiles=None, log_file=N
     num_ring_ring_splits = len(ring_ring_splits)
     num_total = num_ring_ring_splits + num_fragments
     if num_total < 2:
-        return num_ring_ring_splits, num_fragments
+        return num_fragments, num_ring_ring_splits
 
     # Now remove one item on each iteration
     for i in range(num_fragments):
@@ -478,10 +478,10 @@ def create_children(input_node, node_holder, max_frag=0, smiles=None, log_file=N
     if ring_ring_splits:
         for ring_ring_split in ring_ring_splits:
             add_child_and_edge(
-                ring_ring_split, input_node, "[Xe]", node_holder, ring_ring=True
+                ring_ring_split, input_node, "[Xe]", node_holder, ring_ring=True, recurse=recurse
             )
 
-    return num_ring_ring_splits, 0
+    return num_fragments, num_ring_ring_splits
 
 def neutralise_3d_mol(input_mol):
     neutral_mol = NeutraliseCharges(Chem.MolFromMolBlock(input_mol), as_mol=True)[0]
@@ -551,7 +551,7 @@ def build_network(attrs, node_holder, max_frags=0, base_dir='.', verbosity=0, re
         create_end_time = None
         direct_frags = 0
         if node and is_new:
-            direct_ring_ring_splits, direct_frags =\
+            direct_frags, direct_ring_ring_splits =\
                 create_children(node, node_holder,
                                 max_frags, attr.SMILES,
                                 log_file, recurse=recurse)
@@ -560,8 +560,7 @@ def build_network(attrs, node_holder, max_frags=0, base_dir='.', verbosity=0, re
 
         if verbosity:
             total_dur = create_end_time - start_time
-            print('{} {} {}'.format(attr.SMILES, total_dur,
-                                    direct_ring_ring_splits + direct_frags))
+            print('{} {} {}'.format(attr.SMILES, total_dur, direct_ring_ring_splits + direct_frags))
 
         if log_file:
             nh_nodes, nh_edges = node_holder.size()

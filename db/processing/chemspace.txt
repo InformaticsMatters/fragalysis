@@ -3,6 +3,8 @@
 
 conda activate fairmols
 
+TODO improve parallisation
+
 cd /data/chemspace/2019-12
 gzip *.txt
 
@@ -74,3 +76,65 @@ INSERT INTO mol_source (smiles, code, source_id, input_id, nonisomol_id, isomol_
   (SELECT osmiles, cmpd_id, 3, 2, nonisomol_id, isomol_id FROM i_mols);
 
 ### TODO handle the price info
+
+
+# import the fragmentation
+
+DROP TABLE i_node;
+
+CREATE TABLE i_node (
+  smiles TEXT,
+  present BOOLEAN,
+  hac SMALLINT,
+  rac SMALLINT,
+  scaff TEXT,
+  x TEXT,
+  labels TEXT
+);
+
+
+
+# describe the export of the nonisosmiles that need fragmenting
+
+
+\COPY i_node(smiles, hac, rac, scaff, x, labels) FROM '/data/network/nodes-unique.csv' DELIMITER ',' CSV;
+
+UPDATE i_node i SET present = TRUE WHERE EXISTS 
+  (SELECT 1 FROM nonisomol n WHERE n.smiles = i.smiles);
+SELECT present, count(*) FROM i_node GROUP BY present;
+
+INSERT INTO nonisomol (smiles, hac, rac)
+  SELECT smiles, hac, rac FROM i_node 
+  WHERE present IS NULL;
+
+
+split -l 10000000 edges-unique.csv edges_
+# generates edges_aa to edges_al
+
+DROP TABLE i_edge;
+CREATE TABLE i_edge (
+  p_smiles TEXT,
+  c_smiles TEXT,
+  present BOOLEAN,
+  data TEXT,
+  labels TEXT
+);
+
+# TODO improve handling multiple chunks
+
+\COPY i_edge(p_smiles, c_smiles, data, labels) FROM '/data/network/edges_aa' DELIMITER ',' CSV
+
+UPDATE i_edge i SET present = TRUE WHERE EXISTS
+  (SELECT 1 FROM edge e 
+  JOIN nonisomol np ON np.id = e.parent_id 
+  JOIN nonisomol nc ON nc.id = e.child_id 
+  WHERE i.p_smiles = np.smiles AND i.c_smiles = nc.smiles);
+SELECT present, count(*) FROM i_edge GROUP BY present;
+INSERT INTO edge (parent_id, child_id, label)
+  SELECT np.id, nc.id, i.data FROM i_edge i
+    JOIN nonisomol np ON np.smiles = i.p_smiles 
+    JOIN nonisomol nc ON nc.smiles = i.c_smiles
+    WHERE i.present IS NULL;
+
+# repeat for other edges
+

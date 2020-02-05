@@ -43,7 +43,6 @@ def write_data(node_holder):
         node = node_holder.node_list.pop()
         smiles = node.SMILES
         if smiles not in cache:
-            cache.add(smiles)
             write_node(node)
     else:
         # so we need to process the edges

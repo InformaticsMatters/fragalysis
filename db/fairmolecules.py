@@ -114,7 +114,7 @@ class Price(Base):
 class Edge(Base):
     __tablename__ = 'edge'
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey(NonIsomol.id))
+    parent_id = Column(Integer, ForeignKey(NonIsomol.id), index=True)
     child_id = Column(Integer, ForeignKey(NonIsomol.id))
     label = Column(Text(), nullable=False)
     parent = relationship(NonIsomol, foreign_keys=[parent_id])

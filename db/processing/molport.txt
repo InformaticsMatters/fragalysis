@@ -1,0 +1,84 @@
+# molport processing
+
+
+for d1 in 000 001 002 003 004 005 006 007
+  do
+  for d2 in 000 500
+    do
+      d=$d1-$d2
+      mkdir $d
+      mv iis_smiles-${d1}-${d2}-*.txt.gz $d/molport-${d1}-${d2}.txt.gz
+  done
+done
+
+
+
+cd ~/github/im/fragalysis
+
+for d1 in 000 001 002 003 004 005 006 007
+  do
+  for d2 in 000 500
+    do
+    d=$d1-$d2
+    screen -dm time python -m frag.network.scripts.standardise_molport_compounds /data/molport/2019-12/${d} molport /data/molport/2019-12/${d}/standardised
+  done
+done
+
+
+gunzip ???-???/standardised/standardised-compounds.tab.gz
+
+### load standardised mols
+
+DROP TABLE i_mols;
+CREATE TABLE i_mols (
+  osmiles TEXT,
+  isosmiles TEXT,
+  nonisosmiles TEXT,
+  hac SMALLINT,
+  cmpd_id TEXT,
+  price_1 TEXT,
+  price_5 TEXT,
+  price_50 TEXT,
+  lead_time INTEGER,
+  isomol_id INTEGER,
+  nonisomol_id INTEGER
+);
+
+
+\COPY i_mols(osmiles, isosmiles, nonisosmiles, hac, cmpd_id, price_1, price_5, price_50, lead_time) FROM '/data/molport/2019-12/000-000/standardised/standardised-compounds.tab' CSV DELIMITER E'\t' HEADER;
+
+INSERT INTO nonisomol (smiles, hac)
+  SELECT nonisosmiles, hac from i_mols
+  ON CONFLICT ON CONSTRAINT nonisomol_smiles_key DO NOTHING;
+
+UPDATE i_mols i SET nonisomol_id = n.id
+  FROM nonisomol n
+    WHERE n.smiles = i.nonisosmiles;
+
+
+INSERT INTO isomol (smiles, nonisomol_id)
+  SELECT isosmiles, nonisomol_id from i_mols
+  WHERE isosmiles != nonisosmiles
+  ON CONFLICT ON CONSTRAINT isomol_smiles_key DO NOTHING;
+
+UPDATE i_mols i SET isomol_id = n.id
+  FROM isomol n
+    WHERE n.smiles = i.isosmiles
+    AND i.isosmiles != i.nonisosmiles;
+
+
+INSERT INTO mol_input (name, started_date, source_id)
+ VALUES ('molport-2019-12', now(), 4);
+
+# LOOKUP the ID generated - it may not be 5
+
+INSERT INTO mol_source (smiles, code, source_id, input_id, nonisomol_id, isomol_id)
+  (SELECT osmiles, cmpd_id, 4, 5, nonisomol_id, isomol_id FROM i_mols);
+
+
+### TODO handle the price info
+
+
+CREATE INDEX ix_edge_p_id on edge (parent_id);
+
+\COPY (SELECT n.smiles FROM nonisomol n WHERE NOT EXISTS (SELECT 1 FROM edge e WHERE e.parent_id = n.id)) TO '/data/nonisomol.smi';
