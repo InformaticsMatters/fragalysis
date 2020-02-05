@@ -16,7 +16,7 @@ import gzip
 
 
 def _split(input_stream, output_base, output_size, skip, limit, compress,
-           extension):
+           has_header, extension):
     """Splits the lines in an input file (including a header)
     into a series of output files.
 
@@ -36,12 +36,15 @@ def _split(input_stream, output_base, output_size, skip, limit, compress,
     :type limit: ``int``
     :param compress: Compress the output file.
     :type compress: ``bool``
+    :param has_header: True if the file has a header.
+    :type has_header: ``bool``
     :param extension: The extension for the output files.
     :type extension: ``str``
     """
 
     # Get the input file's header
-    header = input_stream.readline()
+    if has_header:
+        header = input_stream.readline()
 
     file_line_count = 0
     file_number = 1
@@ -56,14 +59,15 @@ def _split(input_stream, output_base, output_size, skip, limit, compress,
         if molecule_number > skip:
 
             if file_line_count == 0:
-                # Start a new file and write the header
+                # Start a new file and (optionally) write the header
                 name = output_base + "_" + str(file_number) + extension
                 if compress:
                     name += '.gz'
                     output_file = gzip.open(name, 'wt')
                 else:
                     output_file = open(name, 'w')
-                output_file.write(header)
+                if has_header:
+                    output_file.write(header)
                 file_line_count = 0
 
             output_file.write(line)
@@ -91,7 +95,7 @@ def _split(input_stream, output_base, output_size, skip, limit, compress,
 
 
 def header_split(input_file, output_base, output_size,
-                 skip, limit, compress, extension=".smi"):
+                 skip, limit, compress, has_header=True, extension=".smi"):
     """Splits the lines in an input file (including a header)
     into a series of output files.
 
@@ -111,6 +115,8 @@ def header_split(input_file, output_base, output_size,
     :type limit: ``int``
     :param compress: Compress the output file.
     :type compress: ``bool``
+    :param has_header: True if the file has a header.
+    :type has_header: ``bool``
     :param extension: The extension for the output files.
     :type extension: ``str``
     """
@@ -118,11 +124,11 @@ def header_split(input_file, output_base, output_size,
     if input_file.endswith('.gz'):
         with gzip.open(input_file, 'rt') as smiles_file:
             _split(smiles_file, output_base, output_size, skip, limit, compress,
-                   extension)
+                   has_header, extension)
     else:
         with open(input_file) as smiles_file:
             _split(smiles_file, output_base, output_size, skip, limit, compress,
-                   extension)
+                   has_header, extension)
 
 
 def main():
@@ -163,11 +169,14 @@ def main():
     PARSER.add_argument('--compress',
                         action='store_true',
                         help='Compress (gzip) the output file.')
+    PARSER.add_argument('--no-header',
+                        action='store_true',
+                        help='The file has no header.')
     ARGS = PARSER.parse_args()
 
     header_split(ARGS.input_file, ARGS.output_base,
                  int(ARGS.output_size), int(ARGS.skip), int(ARGS.limit),
-                 ARGS.compress)
+                 ARGS.compress, ARGS.no_header==False)
 
 
 if __name__ == "__main__":
