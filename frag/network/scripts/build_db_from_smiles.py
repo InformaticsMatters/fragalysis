@@ -165,6 +165,9 @@ def main():
         print('ERROR: Must specify a base directory')
         sys.exit(3)
 
+    if not os.path.isdir(args.base_dir):
+        os.mkdir(args.base_dir)
+
     global nodes_f
     global edges_f
     nodes_f = open(os.path.join(args.base_dir, "nodes.csv"), "w")
