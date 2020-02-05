@@ -91,10 +91,10 @@ def write_data(node_holder):
 
     return need_further_processing
 
-def fragment_and_write(smiles):
+def fragment_and_write(smiles, base_dir, verbosity):
 
     #t0 = int(round(time.time() * 1000))
-    node_holder = fragment_mol(smiles)
+    node_holder = fragment_mol(smiles, base_dir, verbosity)
     #t1 = int(round(time.time() * 1000))
     #size = node_holder.size()
     # print("Handling mol {0} with {1} nodes and {2} edges".format(smiles, size[0], size[1]))
@@ -102,11 +102,10 @@ def fragment_and_write(smiles):
     reprocess_count = len(need_further_processing)
     for smiles in need_further_processing:
         # print("Recursing for ", child.smiles)
-        fragment_and_write(smiles)
+        fragment_and_write(smiles, base_dir, verbosity)
     node_holder = None
 
-def fragment_mol(smiles, verbosity=0):
-
+def fragment_mol(smiles, base_dir, verbosity):
     attrs = []
     attr = Attr(smiles, ["EM"])
     attrs.append(attr)
@@ -114,7 +113,8 @@ def fragment_mol(smiles, verbosity=0):
     # Build the network
     node_holder = NodeHolder(iso_flag=False)
     max_frags = 0
-    node_holder = build_network(attrs, node_holder, max_frags, None, verbosity=verbosity, recurse=False)
+    node_holder = build_network(attrs, node_holder, max_frags, base_dir,
+                                verbosity=verbosity, recurse=False)
     # Write the data out
     # print(str(node_holder.size()))
     # for node in node_holder.node_list:
@@ -187,7 +187,7 @@ def main():
                 num_skipped += 1
                 continue
 
-            fragment_and_write(line)
+            fragment_and_write(line, args.base_dir, args.verbosity)
 
             # Enough?
             num_processed += 1
