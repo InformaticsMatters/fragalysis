@@ -101,7 +101,7 @@ do
 screen -dm time python -m frag.network.scripts.build_db_from_smiles --input /data/network-chemspace-2/$d/input_$d --base_dir /data/network-chemspace-2/$d
 done
 
-
+screen -dm time python -m frag.network.scripts.build_db_from_smiles --input /data/network-chemspace-2/00/input_00 --base_dir /data/network-chemspace-2/00
 
 \COPY i_node(smiles, hac, rac, scaff, x, labels) FROM '/data/network/nodes-unique.csv' DELIMITER ',' CSV;
 

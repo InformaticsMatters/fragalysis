@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 #
-# Based on build_db.py, this module builds the graph network from
+# Based on build_db.py, this module builds the graph network nodes and edges from
 # the Informatics Matters 'standard' (uncompressed) file representation.
+# The output is these files:
+# nodes.csv containing the molecules. The fields are: SMILES, HAC, RAC, NUM_EDGES, TIME_MS
+# edges.csv containing the edges. The fields are: PARENT_SMILES, CHILD_SMILES, LABEL
+# rejects.smi containing the SMILES that were rejected because of the fragment count filter.
 #
-# Alan Christie
-# February 2019
+# Tim Dudgeon
+# February 2020
 
 import argparse
 import os
@@ -13,20 +17,22 @@ import collections
 import time
 
 from frag.network.models import NodeHolder, Attr
-from frag.utils.network_utils import build_network, write_data_as_csv
-from frag.std_utils.parser import verify_header, get_standard_items
+from frag.utils.network_utils import build_network
 
 cache = set()
 node_count = 0
 edge_count = 0
+rejects_count = 0
 
+base_dir = None
 nodes_f = None
 edges_f = None
+rejects_f = None
 
-def write_node(node):
+def write_node(node, time_ms, num_edges):
     global node_count
     # print("writing node", node.SMILES)
-    nodes_f.write(node.as_csv() + '\n')
+    nodes_f.write(','.join([node.SMILES, str(node.HAC), str(node.RAC), str(num_edges), str(time_ms)]) + '\n')
     node_count += 1
     cache.add(node.SMILES)
 
@@ -36,7 +42,15 @@ def write_edge(edge):
     edges_f.write(edge.as_csv() + '\n')
     edge_count += 1
 
-def write_data(node_holder):
+def write_reject(smiles):
+    global rejects_f
+
+    if not rejects_f:
+        rejects_f = open(os.path.join(base_dir, "rejects.smi"), "w")
+    rejects_f.write(smiles + '\n')
+
+
+def write_data(node_holder, time_ms, num_edges):
     need_further_processing = []
     # if no edges then just set status to complete
     if node_holder.size()[1] == 0:
@@ -44,7 +58,7 @@ def write_data(node_holder):
             node = node_holder.node_list.pop()
             smiles = node.SMILES
             if smiles not in cache:
-                write_node(node)
+                write_node(node, time_ms, 0)
     else:
         # so we need to process the edges
 
@@ -69,7 +83,7 @@ def write_data(node_holder):
         fcc1 = len(grouped_parent_edges)
         for p_smiles in grouped_parent_edges:
             p_node = parent_nodes[p_smiles]
-            write_node(p_node)
+            write_node(p_node, time_ms, num_edges)
             edges = grouped_parent_edges[p_smiles]
             grouped_child_edges = collections.OrderedDict()
             # child_nodes = {}
@@ -91,30 +105,37 @@ def write_data(node_holder):
 
     return need_further_processing
 
-def fragment_and_write(smiles, base_dir, verbosity):
+def fragment_and_write(smiles, max_frags=0, verbosity=0):
 
-    #t0 = int(round(time.time() * 1000))
-    node_holder = fragment_mol(smiles, base_dir, verbosity)
-    #t1 = int(round(time.time() * 1000))
-    #size = node_holder.size()
+    global rejects_count
+
+    t0 = time.time()
+    node_holder = fragment_mol(smiles, verbosity=verbosity)
+    t1 = time.time()
+    time_ms = int(round((t1 - t0) * 1000))
+    size = node_holder.size()
+    if 0 < max_frags < size[1]:
+        #print("Skipping", smiles, "with edge count of", size[1])
+        write_reject(smiles)
+        rejects_count += 1
+        return
     # print("Handling mol {0} with {1} nodes and {2} edges".format(smiles, size[0], size[1]))
-    need_further_processing = write_data(node_holder)
+    need_further_processing = write_data(node_holder, time_ms, size[1])
     reprocess_count = len(need_further_processing)
     for smiles in need_further_processing:
         # print("Recursing for ", child.smiles)
-        fragment_and_write(smiles, base_dir, verbosity)
+        fragment_and_write(smiles, max_frags=max_frags, verbosity=verbosity)
     node_holder = None
 
-def fragment_mol(smiles, base_dir, verbosity):
+def fragment_mol(smiles, verbosity=0):
+
     attrs = []
     attr = Attr(smiles, ["EM"])
     attrs.append(attr)
 
     # Build the network
     node_holder = NodeHolder(iso_flag=False)
-    max_frags = 0
-    node_holder = build_network(attrs, node_holder, max_frags, base_dir,
-                                verbosity=verbosity, recurse=False)
+    node_holder = build_network(attrs, node_holder, base_dir=None, verbosity=verbosity, recurse=False)
     # Write the data out
     # print(str(node_holder.size()))
     # for node in node_holder.node_list:
@@ -166,13 +187,18 @@ def main():
         print('ERROR: Must specify a base directory')
         sys.exit(3)
 
-    if not os.path.isdir(args.base_dir):
-        os.mkdir(args.base_dir)
-
+    global base_dir
     global nodes_f
     global edges_f
-    nodes_f = open(os.path.join(args.base_dir, "nodes.csv"), "w")
-    edges_f = open(os.path.join(args.base_dir, "edges.csv"), "w")
+    global rejects_f
+    base_dir = args.base_dir
+
+    if not os.path.isdir(base_dir):
+        os.mkdir(base_dir)
+
+
+    nodes_f = open(os.path.join(base_dir, "nodes.csv"), "w")
+    edges_f = open(os.path.join(base_dir, "edges.csv"), "w")
 
     with open(args.input, 'r') as standard_file:
 
@@ -187,7 +213,9 @@ def main():
                 num_skipped += 1
                 continue
 
-            fragment_and_write(line, args.base_dir, args.verbosity)
+            line = line.strip()
+            if line:
+                fragment_and_write(line, max_frags=args.max_frag, verbosity=args.verbosity)
 
             # Enough?
             num_processed += 1
@@ -198,7 +226,10 @@ def main():
 
     nodes_f.close()
     edges_f.close()
-    print("Processed {0} molecules, Wrote {1} nodes and {2} edges".format(num_processed, node_count, edge_count))
+    if rejects_f:
+        rejects_f.close()
+
+    print("Processed {0} molecules, wrote {1} nodes and {2} edges, {3} rejects".format(num_processed, node_count, edge_count, rejects_count))
 
 
 if __name__ == "__main__":
