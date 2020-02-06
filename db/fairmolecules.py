@@ -24,16 +24,12 @@ class NonIsomol(Base):
     __tablename__ = 'nonisomol'
     id = Column(Integer, primary_key=True)
 
-    # smiles = Column(Text(), nullable=False, unique=True)
     smiles = Column(Text(), nullable=False, unique=True)
     inchik = Column(Text())
     inchis = Column(Text())
     hac = Column(SmallInteger())
     rac = Column(SmallInteger())
-    fc = Column(SmallInteger())
-    fs = Column(Integer(), index=True)
-    fcc1 = Column(Integer())
-    fcc2 = Column(Integer())
+    fcount = Column(SmallInteger())
     ftime = Column(Integer())
     inchi_id = Column(Integer, ForeignKey('inchi.id'))
     inchi = relationship(Inchi)
@@ -61,28 +57,6 @@ class Source(Base):
         UniqueConstraint(name, version, name='uq_source'),
     )
 
-class MolInput(Base):
-    __tablename__ = 'mol_input'
-    id = Column(Integer, primary_key=True)
-    name = Column(Text(), nullable=False)
-    started_date = Column(DateTime())
-    finished_date = Column(DateTime())
-    size = Column(Integer())
-    molecule_failures = Column(Integer())
-    inchi_failures = Column(Integer())
-    inchi_hits = Column(Integer())
-    inchi_miss = Column(Integer())
-    nonisomol_hits = Column(Integer())
-    nonisomol_miss = Column(Integer())
-    isomol_hits = Column(Integer())
-    isomol_miss = Column(Integer())
-    source_id = Column(Integer, ForeignKey(Source.id, ondelete='CASCADE'), nullable=False)
-    source = relationship(Source)
-
-    __table_args__ = (
-        UniqueConstraint(source_id, name, name='uq_input'),
-    )
-
 
 class MolSource(Base):
     __tablename__ = 'mol_source'
@@ -91,11 +65,9 @@ class MolSource(Base):
     smiles = Column(Text(), nullable=False)
     code = Column(Text(), nullable=False)
     source_id = Column(Integer, ForeignKey(Source.id, ondelete='CASCADE'), nullable=False, index=True)
-    input_id = Column(Integer, ForeignKey(MolInput.id, ondelete='CASCADE'), nullable=False)
     nonisomol_id = Column(Integer, ForeignKey('nonisomol.id'), index=True)
     isomol_id = Column(Integer, ForeignKey('isomol.id'), index=True)
     source = relationship(Source)
-    input = relationship(MolInput)
     nonisomol = relationship(NonIsomol)
     isomol = relationship(Isomol)
 
