@@ -3,7 +3,7 @@
 # Based on build_db.py, this module builds the graph network nodes and edges from
 # the Informatics Matters 'standard' (uncompressed) file representation.
 # The output is these files:
-# nodes.csv containing the molecules. The fields are: SMILES, HAC, RAC, NUM_EDGES, TIME_MS
+# nodes.csv containing the molecules. The fields are: SMILES, HAC, RAC, NUM_CHILDREN, NUM_EDGES, TIME_MS
 # edges.csv containing the edges. The fields are: PARENT_SMILES, CHILD_SMILES, LABEL
 # rejects.smi containing the SMILES that were rejected because of the fragment count filter.
 #
@@ -29,10 +29,10 @@ nodes_f = None
 edges_f = None
 rejects_f = None
 
-def write_node(node, time_ms, num_edges):
+def write_node(node, time_ms, num_children, num_edges):
     global node_count
     # print("writing node", node.SMILES)
-    nodes_f.write(','.join([node.SMILES, str(node.HAC), str(node.RAC), str(num_edges), str(time_ms)]) + '\n')
+    nodes_f.write(','.join([node.SMILES, str(node.HAC), str(node.RAC), str(num_children), str(num_edges), str(time_ms)]) + '\n')
     node_count += 1
     cache.add(node.SMILES)
 
@@ -50,7 +50,7 @@ def write_reject(smiles):
     rejects_f.write(smiles + '\n')
 
 
-def write_data(node_holder, time_ms, num_edges):
+def write_data(node_holder, time_ms, num_children, num_edges):
     need_further_processing = []
     # if no edges then just set status to complete
     if node_holder.size()[1] == 0:
@@ -58,7 +58,7 @@ def write_data(node_holder, time_ms, num_edges):
             node = node_holder.node_list.pop()
             smiles = node.SMILES
             if smiles not in cache:
-                write_node(node, time_ms, 0)
+                write_node(node, time_ms, 0, 0)
     else:
         # so we need to process the edges
 
@@ -83,7 +83,7 @@ def write_data(node_holder, time_ms, num_edges):
         fcc1 = len(grouped_parent_edges)
         for p_smiles in grouped_parent_edges:
             p_node = parent_nodes[p_smiles]
-            write_node(p_node, time_ms, num_edges)
+            write_node(p_node, time_ms, num_children, num_edges)
             edges = grouped_parent_edges[p_smiles]
             grouped_child_edges = collections.OrderedDict()
             # child_nodes = {}
@@ -114,13 +114,15 @@ def fragment_and_write(smiles, max_frags=0, verbosity=0):
     t1 = time.time()
     time_ms = int(round((t1 - t0) * 1000))
     size = node_holder.size()
-    if 0 < max_frags < size[1]:
+    # the number of children is the number of nodes minus one (the parent)
+    num_children = size[0] - 1
+    if 0 < max_frags < num_children:
         #print("Skipping", smiles, "with edge count of", size[1])
         write_reject(smiles)
         rejects_count += 1
         return
     # print("Handling mol {0} with {1} nodes and {2} edges".format(smiles, size[0], size[1]))
-    need_further_processing = write_data(node_holder, time_ms, size[1])
+    need_further_processing = write_data(node_holder, time_ms, num_children, size[1])
     reprocess_count = len(need_further_processing)
     for smiles in need_further_processing:
         # print("Recursing for ", child.smiles)
