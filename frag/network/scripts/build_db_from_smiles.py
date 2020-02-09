@@ -50,58 +50,50 @@ def write_reject(smiles):
     rejects_f.write(smiles + '\n')
 
 
-def write_data(node_holder, time_ms, num_children, num_edges):
-    need_further_processing = []
-    # if no edges then just set status to complete
-    if node_holder.size()[1] == 0:
+def write_data(node_holder, time_ms):
+    """
+    Write the data from the NodeHolder to the nodes.csv and edges.csv files
+    :param node_holder:
+    :param time_ms: The time taken to perform the fragmentation
+    :param num_children: The number of child nodes
+    :param num_edges: The number of child edges (some parent->child relationships have multiple edges)
+    :return:
+    """
+    need_further_processing = set()
+
+    sizes = node_holder.size() # a tuple of the number of nodes and the number of edges
+    num_children = sizes[0] - 1
+    num_edges = sizes[1]
+
+    # if no edges then this is a leaf node with no children so we just write the node
+    if num_edges == 0:
         if node_holder.node_list:
             node = node_holder.node_list.pop()
             smiles = node.SMILES
             if smiles not in cache:
                 write_node(node, time_ms, 0, 0)
     else:
-        # so we need to process the edges
-
-        # group the edges by parent and prepare the nonisomols
-        grouped_parent_edges = collections.OrderedDict()
-        parent_nodes = {}
-        r_smiles = None
+        # so we have edges to process
+        p_node = None
         for edge in node_holder.get_edges():
-            # handle the parent nonisomol
-            p_node = edge.NODES[0]
+            if not p_node:
+                # this happens only for the first edge
+                p_node = edge.NODES[0]
+                if p_node.SMILES in cache:
+                    # no need to process. return immediately with need_further_processing being empty
+                    return need_further_processing
+                # so it's a new node so we must write it
+                write_node(p_node, time_ms, num_children, num_edges)
+            elif edge.NODES[0] != p_node:
+                # for all other edges check that the parent is the same
+                raise ValueError("ERROR. All edges should have the same parent SMILES", p_smiles, p_node.SMILES)
+
+            c_node = edge.NODES[1]
             p_smiles = p_node.SMILES
-            parent_nodes[p_smiles] = p_node
-            if p_smiles not in cache:
-                if not r_smiles:
-                    r_smiles = p_smiles
-                if p_smiles in grouped_parent_edges:
-                    grouped_parent_edges[p_smiles].append(edge)
-                else:
-                    # it's new to this group of edges
-                    grouped_parent_edges[p_smiles] = [edge]
-
-        fcc1 = len(grouped_parent_edges)
-        for p_smiles in grouped_parent_edges:
-            p_node = parent_nodes[p_smiles]
-            write_node(p_node, time_ms, num_children, num_edges)
-            edges = grouped_parent_edges[p_smiles]
-            grouped_child_edges = collections.OrderedDict()
-            # child_nodes = {}
-            for edge in edges:
-                c_node = edge.NODES[1]
-                c_smiles = c_node.SMILES
-                # child_nodes[c_smiles] = c_node
-                if c_smiles in grouped_child_edges:
-                    grouped_child_edges[c_smiles].append(edge)
-                else:
-                    grouped_child_edges[c_smiles] = [edge]
-
-            for c_smiles in grouped_child_edges:
-                if c_smiles not in cache:
-                    need_further_processing.append(c_smiles)
-                edges = grouped_child_edges[c_smiles]
-                for edge in edges:
-                    write_edge(edge)
+            c_smiles = c_node.SMILES
+            if c_smiles not in cache:
+                need_further_processing.add(c_smiles)
+            write_edge(edge)
 
     return need_further_processing
 
@@ -117,12 +109,11 @@ def fragment_and_write(smiles, max_frags=0, verbosity=0):
     # the number of children is the number of nodes minus one (the parent)
     num_children = size[0] - 1
     if 0 < max_frags < num_children:
-        #print("Skipping", smiles, "with edge count of", size[1])
         write_reject(smiles)
         rejects_count += 1
         return
     # print("Handling mol {0} with {1} nodes and {2} edges".format(smiles, size[0], size[1]))
-    need_further_processing = write_data(node_holder, time_ms, num_children, size[1])
+    need_further_processing = write_data(node_holder, time_ms)
     reprocess_count = len(need_further_processing)
     for smiles in need_further_processing:
         # print("Recursing for ", child.smiles)

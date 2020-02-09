@@ -34,6 +34,11 @@ INSERT INTO nonisomol (smiles, hac)
   SELECT nonisosmiles, hac from i_mols
   ON CONFLICT ON CONSTRAINT nonisomol_smiles_key DO NOTHING;
 
+#INSERT INTO nonisomol (smiles, hac)
+#  SELECT nonisosmiles, hac from i_mols
+#  WHERE isosmiles = nonisosmiles
+#  ON CONFLICT ON CONSTRAINT nonisomol_smiles_key DO NOTHING;
+
 UPDATE i_mols i SET nonisomol_id = n.id
   FROM nonisomol n
     WHERE n.smiles = i.nonisosmiles;
@@ -43,10 +48,9 @@ INSERT INTO isomol (smiles, nonisomol_id)
   WHERE isosmiles != nonisosmiles
   ON CONFLICT ON CONSTRAINT isomol_smiles_key DO NOTHING;
 
-UPDATE i_mols i SET isomol_id = n.id
-  FROM isomol n
-    WHERE n.smiles = i.isosmiles
-    AND i.isosmiles != i.nonisosmiles;
+UPDATE i_mols i SET isomol_id = iso.id
+  FROM isomol iso
+    WHERE iso.smiles = i.isosmiles;
 
 INSERT INTO mol_source (smiles, code, source_id, nonisomol_id, isomol_id)
   (SELECT osmiles, cmpd_id, 6, nonisomol_id, isomol_id FROM i_mols);

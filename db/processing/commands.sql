@@ -125,7 +125,7 @@ WITH RECURSIVE fragments AS (
 ) SELECT * FROM fragments;
 
 select n.id, n.smiles from mol_source ms join nonisomol n on n.id = ms.nonisomol_id where ms.source_id = 6
-union
+
 select n.id, n.smiles from mol_source ms join isomol i on i.id = ms.isomol_id join nonisomol n on i.nonisomol_id = n.id where ms.source_id = 6;
 
 # export to CSV

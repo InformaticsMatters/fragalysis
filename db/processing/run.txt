@@ -1,6 +1,6 @@
 docker run -p 5432:5432 -e POSTGRES_PASSWORD=hello -v /home/timbo/fmolsdata:/var/lib/postgresql/data:Z --name fairmoleculesdb --shm-size=5g postgres:11 -c 'shared_buffers=4GB'
 
-docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=hello -v /pgdata:/var/lib/postgresql/data:Z -v /pgwal:/var/lib/postgresql/data/pg_wal:Z --name fairmoleculesdb informaticsmatters/rdkit-cartridge-debian:Release_2019_09_2 -c 'shared_buffers=8GB'
+docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=hello -v /pgdata:/var/lib/postgresql/data:Z -v /pgwal:/var/lib/postgresql/data/pg_wal:Z --name fairmoleculesdb --shm-size=9g informaticsmatters/rdkit-cartridge-debian:Release_2019_09_2 -c 'shared_buffers=8GB'
 
 # postgres
 #create database fairmolecules encoding 'LATIN1' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;

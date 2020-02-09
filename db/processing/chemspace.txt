@@ -95,13 +95,20 @@ CREATE TABLE i_node (
 
 
 # TODO describe the export of the nonisosmiles that need fragmenting
+for d in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+do
+mkdir $d
+mv input_$d $d/input.smi
+done
+
+conda activate fairmols && time python -m frag.network.scripts.build_db_from_smiles --input /data/network-chemspace-4/input_00 --base_dir /data/network-chemspace-4/00
+
+
 
 for d in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
 do
 screen -dm time python -m frag.network.scripts.build_db_from_smiles --input /data/network-chemspace-2/$d/input_$d --base_dir /data/network-chemspace-2/$d
 done
-
-screen -dm time python -m frag.network.scripts.build_db_from_smiles --input /data/network-chemspace-2/00/input_00 --base_dir /data/network-chemspace-2/00
 
 \COPY i_node(smiles, hac, rac, scaff, x, labels) FROM '/data/network/nodes-unique.csv' DELIMITER ',' CSV;
 

@@ -24,6 +24,11 @@ for d1 in 000 001 002 003 004 005 006 007
   done
 done
 
+time python -m frag.network.scripts.standardise_molport_compounds /data/molport/2019-12/000-500 molport /data/molport/2019-12/000-500/standardised
+cd /data/molport/2019-12/000-500/standardised/
+zcat standardised-compounds.tab.gz | cut -f 3 | tail -n +2 | sort -u > noniso-unique.smi
+split -l 50000 -d noniso-unique.smi input_
+
 
 gunzip ???-???/standardised/standardised-compounds.tab.gz
 
@@ -82,3 +87,6 @@ INSERT INTO mol_source (smiles, code, source_id, input_id, nonisomol_id, isomol_
 CREATE INDEX ix_edge_p_id on edge (parent_id);
 
 \COPY (SELECT n.smiles FROM nonisomol n WHERE NOT EXISTS (SELECT 1 FROM edge e WHERE e.parent_id = n.id)) TO '/data/nonisomol.smi';
+
+conda activate fairmols && \
+time python -m frag.network.scripts.build_db_from_smiles --max-frag 12 --input /data/molport/2019-12/001-000/standardised/input_00 --base_dir /data/molport/2019-12/001-000/standardised/00
