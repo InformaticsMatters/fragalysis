@@ -22,22 +22,17 @@ CREATE TABLE i_mols (
   isosmiles TEXT,
   nonisosmiles TEXT,
   hac SMALLINT,
+  rac SMALLINT,
   cmpd_id TEXT,
-  price INTEGER,
   isomol_id INTEGER,
   nonisomol_id INTEGER
 );
 
 \COPY i_mols(osmiles, isosmiles, nonisosmiles, hac, cmpd_id) FROM '/data/xchem/standardised/standardised-compounds.tab' CSV DELIMITER E'\t' HEADER;
 
-INSERT INTO nonisomol (smiles, hac)
-  SELECT nonisosmiles, hac from i_mols
+INSERT INTO nonisomol (smiles, hac, rac)
+  SELECT nonisosmiles, hac, rac from i_mols
   ON CONFLICT ON CONSTRAINT nonisomol_smiles_key DO NOTHING;
-
-#INSERT INTO nonisomol (smiles, hac)
-#  SELECT nonisosmiles, hac from i_mols
-#  WHERE isosmiles = nonisosmiles
-#  ON CONFLICT ON CONSTRAINT nonisomol_smiles_key DO NOTHING;
 
 UPDATE i_mols i SET nonisomol_id = n.id
   FROM nonisomol n
@@ -58,11 +53,11 @@ INSERT INTO mol_source (smiles, code, source_id, nonisomol_id, isomol_id)
 
 ### fragmentation
 
-\COPY (SELECT n.smiles FROM nonisomol n WHERE NOT EXISTS (SELECT 1 FROM edge e WHERE e.parent_id = n.id)) TO '/data/dsip/nonisomol.smi';
+\COPY (SELECT n.smiles FROM nonisomol n WHERE NOT EXISTS (SELECT 1 FROM edge e WHERE e.parent_id = n.id)) TO '/data/xchem/nonisomol.smi';
 
 # this creates nodes.csv and edges.csv in /data/network/dsip/
 # TODO improve the ergonomics of fragmentation
-time python -m frag.network.scripts.build_db_from_smiles --input /data/network/dsip/nonisomol.smi --base_dir /data/network/dsip
+time python -m frag.network.scripts.build_db_from_smiles --input /data/xchem/nonisomol.smi --base_dir /data/xchem/
 
 # import the nodes
 
@@ -74,7 +69,8 @@ CREATE TABLE i_node (
   nonisomol_id INTEGER,
   hac SMALLINT,
   rac SMALLINT,
-  fcount INTEGER,
+  child_count INTEGER,
+  edge_count INTEGER,
   ftime INTEGER
 );
 
@@ -86,27 +82,23 @@ CREATE TABLE i_edge (
 );
 
 
-\COPY i_node(smiles, hac, rac, fcount, ftime) FROM '/data/network/dsip/nodes.csv' DELIMITER ',' CSV;
-
-#UPDATE i_node i SET present = TRUE WHERE EXISTS
-#  (SELECT 1 FROM nonisomol n WHERE n.smiles = i.smiles);
-#SELECT present, count(*) FROM i_node GROUP BY present;
+\COPY i_node(smiles, hac, rac, child_count, edge_count, ftime) FROM '/data/xchem/nodes.csv' DELIMITER ',' CSV;
 
 UPDATE i_node i SET nonisomol_id = n.id
   FROM nonisomol n WHERE n.smiles = i.smiles;
 
-INSERT INTO nonisomol (smiles, hac, rac, fcount, ftime)
-  SELECT smiles, hac, rac, fcount, ftime FROM i_node
+INSERT INTO nonisomol (smiles, hac, rac, child_count, edge_count, ftime)
+  SELECT smiles, hac, rac, child_count, edge_count, ftime FROM i_node
   WHERE nonisomol_id IS NULL;
 
-# this next query needs optimising
-WITH s AS (SELECT i.nonisomol_id, i.fcount, i.ftime FROM i_node i
+-- this next query needs optimising
+WITH s AS (SELECT i.nonisomol_id, i.child_count, i.edge_count, i.ftime FROM i_node i
   JOIN nonisomol n ON n.id = i.nonisomol_id
   WHERE i.nonisomol_id = n.id AND i.nonisomol_id IS NOT NULL)
-UPDATE nonisomol n SET fcount = s.fcount, ftime = s.ftime FROM s
+UPDATE nonisomol n SET child_count = s.child_count, edge_count = s.edge_count, ftime = s.ftime FROM s
   WHERE s.nonisomol_id = n.id;
 
-\COPY i_edge(p_smiles, c_smiles, label) FROM '/data/xchem/standardised/edges.csv' DELIMITER ',' CSV;
+\COPY i_edge(p_smiles, c_smiles, label) FROM '/data/xchem/edges.csv' DELIMITER ',' CSV
 
 UPDATE i_edge i SET present = TRUE WHERE EXISTS
   (SELECT 1 FROM edge e 
