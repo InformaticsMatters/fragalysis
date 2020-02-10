@@ -221,7 +221,7 @@ def main():
 
             # Enough?
             num_processed += 1
-            if num_processed % args.report_interval == 0:
+            if args.report_interval > 0 and num_processed % args.report_interval == 0:
                 print("Processed mol", num_processed)
             if args.limit and num_processed >= args.limit:
                 break
