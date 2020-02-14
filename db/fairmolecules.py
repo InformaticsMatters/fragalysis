@@ -17,7 +17,7 @@ class Inchi(Base):
     id = Column(Integer, primary_key=True)
 
     inchik = Column(Text(), nullable=False)
-    inchis = Column(Text(), nullable=False)
+    inchis = Column(Text(), nullable=False, unique=True)
     Index('ix_inchik', inchik, postgresql_using='hash')
 
 class NonIsomol(Base):

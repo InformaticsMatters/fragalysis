@@ -319,3 +319,60 @@ SELECT count(*) FROM nonisomol n WHERE EXISTS
 \COPY (SELECT n.smiles FROM nonisomol n WHERE NOT EXISTS (SELECT 1 FROM edge e WHERE e.parent_id = n.id)) TO '/data/nonisomol.smi';
 
 
+-- InChi processing
+-- isomol
+
+\COPY (SELECT smiles FROM isomol WHERE inchis IS NULL) TO '/tmp/isomol.smi'
+
+python -m frag.network.scripts.generate_inchi -i /tmp/isomol.smi -o /tmp/isomol.inchi -n
+
+DROP TABLE i_iso_inchi;
+CREATE TABLE i_iso_inchi (
+  smiles TEXT,
+  n_inchis TEXT,
+  n_inchik TEXT
+);
+
+\COPY i_iso_inchi(smiles, n_inchis, n_inchik) FROM '/tmp/isomol.inchi'
+
+UPDATE isomol m SET inchik = t.n_inchik, inchis = t.n_inchis
+  FROM i_iso_inchi t
+    WHERE m.smiles = t.smiles;
+
+-- nonisomol
+
+\COPY (SELECT smiles FROM nonisomol WHERE inchis IS NULL) TO '/tmp/nonisomol.smi'
+
+python -m frag.network.scripts.generate_inchi -i /tmp/nonisomol.smi -o /tmp/nonisomol.inchi -n -s
+
+DROP TABLE i_noniso_inchi;
+CREATE TABLE i_noniso_inchi (
+  smiles TEXT,
+  s_inchis TEXT,
+  s_inchik TEXT,
+  n_inchis TEXT,
+  n_inchik TEXT,
+  inchi_id INTEGER
+);
+
+-- ALTER TABLE inchi ADD CONSTRAINT uq_inchi UNIQUE (inchis);
+
+\COPY i_noniso_inchi(smiles, s_inchis, s_inchik, n_inchis, n_inchik) FROM '/tmp/nonisomol.inchi'
+
+UPDATE nonisomol m SET inchik = t.n_inchik, inchis = t.n_inchis
+  FROM i_noniso_inchi t
+    WHERE m.smiles = t.smiles;
+
+
+INSERT INTO inchi (inchik, inchis)
+  SELECT s_inchik, s_inchis from i_noniso_inchi
+  ON CONFLICT ON CONSTRAINT uq_inchi DO NOTHING;
+
+UPDATE i_noniso_inchi t SET inchi_id = i.id
+  FROM inchi i
+    WHERE i.inchis = t.s_inchis;
+
+
+UPDATE nonisomol n SET inchi_id = t.inchi_id
+  FROM i_noniso_inchi t
+    WHERE n.smiles = t.smiles;
